@@ -6,7 +6,7 @@
  *     http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-package lu.neubias.imagej;
+package uk.ac.warwick.camdu;
 
 import ij.IJ;
 import ij.ImagePlus;
