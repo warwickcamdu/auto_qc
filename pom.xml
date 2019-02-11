@@ -12,21 +12,21 @@
 		<relativePath />
 	</parent>
 
-	<groupId>lu.neubias</groupId>
+	<groupId>uk.ac.warwick.camdu</groupId>
 	<artifactId>autoqc</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>0.2.0-SNAPSHOT</version>
 
 	<name>Auto QC</name>
-	<description>A Maven project implementing an ImageJ command.</description>
-	<url>http://mycompany.com/imagej/gauss-filtering/</url>
+	<description>ImageJ plugin for automating quality control tasks for microscopes.</description>
+	<url>http://www.warwick.ac.uk/camdu/</url>
 	<inceptionYear>2019</inceptionYear>
 	<organization>
-		<name>NEUBIAS LUXEMBOURG Group4</name>
-		<url>http://mycompany.com/</url>
+		<name>University of Warwick</name>
+		<url>www.warwick.ac.uk</url>
 	</organization>
 	<licenses>
 		<license>
-			<name>Simplified BSD License</name>
+			<name>GNU General Public License</name>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
@@ -34,9 +34,9 @@
 	<developers>
 		<!-- See https://imagej.net/Team -->
 		<developer>
-			<id>Group4</id>
-			<name>Group4</name>
-			<url>http://imagej.net/User:Rueden</url>
+			<id>erickratamero</id>
+			<name>Erick Ratamero</name>
+			<url>www.warwick.ac.uk/erickratamero</url>
 			<roles>
 				<role>founder</role>
 				<role>lead</role>
@@ -47,13 +47,67 @@
 				<role>maintainer</role>
 			</roles>
 		</developer>
+
+		<developer>
+			<id>christopherschmied</id>
+			<name>Christopher Schmied</name>
+
+			<roles>
+				<role>founder</role>
+
+			</roles>
+		</developer>
+
+		<developer>
+			<id>janeckhardt</id>
+			<name>Jan Eckhardt</name>
+
+			<roles>
+				<role>founder</role>
+
+			</roles>
+		</developer>
+
+		<developer>
+			<id>paulstroe</id>
+			<name>Paul Stroe</name>
+
+			<roles>
+				<role>founder</role>
+
+			</roles>
+		</developer>
+
+		<developer>
+			<id>cesarvalades</id>
+			<name>César Augusto VALADÉS CRUZ</name>
+
+			<roles>
+				<role>founder</role>
+
+			</roles>
+		</developer>
+
+		<developer>
+			<id>clairemitchell</id>
+			<name>Claire Mitchell</name>
+			<url>www.warwick.ac.uk/camdu</url>
+			<roles>
+				<role>founder</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+
 	</developers>
 	<contributors>
 		<contributor>
 			<name>none</name>
-			<url>http://imagej.net/User:Panovr</url>
+			<url>http://imagej.net/</url>
 			<roles><role>founder</role></roles>
-			<properties><id>panovr</id></properties>
+			<properties><id>none</id></properties>
 		</contributor>
 	</contributors>
 
@@ -65,25 +119,25 @@
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:git://github.com/imagej/example-imagej-command</connection>
-		<developerConnection>scm:git:git@github.com:imagej/example-imagej-command</developerConnection>
+		<connection>scm:git:git://github.com/erickmartins/auto_qc</connection>
+		<developerConnection>scm:git:git@github.com:erickmartins/auto_qc</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/imagej/example-imagej-command</url>
+		<url>https://github.com/erickmartins/auto_qc</url>
 	</scm>
 	<issueManagement>
 		<system>GitHub Issues</system>
-		<url>https://github.com/imagej/example-imagej-command/issues</url>
+		<url>https://github.com/erickrmartins/auto_qc/issues</url>
 	</issueManagement>
 	<ciManagement>
 		<system>None</system>
 	</ciManagement>
 
 	<properties>
-		<package-name>lu.neubias.imagej</package-name>
-		<main-class>lu.neubias.imagej.autoqc</main-class>
-		<license.licenseName>bsd_2</license.licenseName>
-		<license.copyrightOwners>My Company, Inc.</license.copyrightOwners>
-		<imagej.app.directory>/home/schmiedc/Desktop/data1/FMP_Docs/DevelopmentEnv/Fiji/Fiji.app/</imagej.app.directory>
+		<package-name>uk.ac.warwick.camdu.autoqc</package-name>
+		<main-class>uk.ac.warwick.camdu.autoQC</main-class>
+		<license.licenseName>gpl</license.licenseName>
+		<license.copyrightOwners>University of Warwick</license.copyrightOwners>
+		<imagej.app.directory>/home/erick/Downloads/Fiji.app/</imagej.app.directory>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
@@ -118,7 +172,7 @@
 		<artifactId>MetroloJ</artifactId>
 		<version>1.0</version>
 		<scope>system</scope>
-		<systemPath>/home/schmiedc/Desktop/FMP_Docs/DevelopmentEnv/Fiji/Fiji.app/plugins/metroloj_.jar</systemPath>
+		<systemPath>/home/erick/Downloads/Fiji.app/plugins/metroloj_.jar</systemPath>
 	</dependency>
 		<dependency>
 			<groupId>ome</groupId>

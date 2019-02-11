@@ -34,7 +34,6 @@ import org.scijava.plugin.Plugin;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -42,8 +41,8 @@ import java.util.Arrays;
 /**
  */
 
-@Plugin(type = Command.class, menuPath = "Plugins>Gauss Filtering")
-public class autoqc<T extends RealType<T>> extends Component implements Command {
+@Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoPSF")
+public class autoPSF<T extends RealType<T>> extends Component implements Command {
 
     @Parameter
     private ImageJ ij;
@@ -383,8 +382,8 @@ public class autoqc<T extends RealType<T>> extends Component implements Command 
            // ij.ui().show(dataset);
 
             // invoke the plugin
-           // ij.command().run(autoqc.class, true);
-        autoqc test = new autoqc();
+           // ij.command().run(autoPSF.class, true);
+        autoPSF test = new autoPSF();
         test.run();
         }
     }
