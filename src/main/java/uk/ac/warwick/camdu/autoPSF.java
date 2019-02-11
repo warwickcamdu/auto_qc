@@ -12,6 +12,8 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -54,23 +56,128 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     double corr_factor_z = 1.186;
     int minSeparation = 15;
 
-    public void run() {
+    String srcDir = "";
 
+    public void setExtension(String extension){
+        ext = extension;
+
+    }
+
+    public void setBeads(int beadnum){
+        beads = beadnum;
+
+    }
+
+    public void setCorrX(double corr_x){
+        corr_factor_x = corr_x;
+
+    }
+
+    public void setCorrY(double corr_y){
+        corr_factor_y = corr_y;
+
+    }
+
+    public void setCorrZ(double corr_z){
+        corr_factor_z = corr_z;
+
+    }
+
+    public void setMinSep(int minsep){
+        minSeparation = minsep;
+
+    }
+
+    public void setDir(String sourceDir){
+        srcDir = sourceDir;
+
+    }
+
+
+    public void createUI(){
+        JTextField extField = new JTextField(".dv",10);
+        JTextField beadField = new JTextField("5",5);
+        JTextField corrXField = new JTextField("1.168",5);
+        JTextField corrYField = new JTextField("1.168",5);
+        JTextField corrZField = new JTextField("1.168",5);
+        JTextField sepField = new JTextField("15",5);
+
+        JButton browseBtn = new JButton("Browse:");
+
+        browseBtn.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                browseButtonActionPerformed(e);
+            }
+        });
+
+
+
+        System.out.println(srcDir);
+
+
+
+        JPanel myPanel = new JPanel();
+
+        myPanel.add(new JLabel("File extension:"));
+        myPanel.add(extField);
+
+        myPanel.add(new JLabel("Number of beads:"));
+        myPanel.add(beadField);
+
+        myPanel.add(new JLabel("Correction factor (x):"));
+        myPanel.add(corrXField);
+
+        myPanel.add(new JLabel("Correction factor (y):"));
+        myPanel.add(corrYField);
+
+        myPanel.add(new JLabel("Correction factor (z):"));
+        myPanel.add(corrZField);
+
+        myPanel.add(new JLabel("Minimum bead separation (px):"));
+        myPanel.add(sepField);
+
+        myPanel.add(new JLabel("Please select your datset:"));
+        myPanel.add(browseBtn);
+
+        myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.Y_AXIS));
+
+        int result = JOptionPane.showConfirmDialog(
+                null, myPanel, "autoPSF", JOptionPane.OK_CANCEL_OPTION);
+
+        setExtension(extField.getText());
+        setBeads(Integer.parseInt(beadField.getText()));
+        setCorrX(Double.parseDouble(corrXField.getText()));
+        setCorrY(Double.parseDouble(corrYField.getText()));
+
+        setMinSep(Integer.parseInt(sepField.getText()));
+
+
+
+    }
+
+    private void browseButtonActionPerformed(ActionEvent e) {
         JFileChooser chooser = new JFileChooser();
         int returnVal= (int) chooser.showOpenDialog(this);
 
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
         File selectedDir = chooser.getCurrentDirectory();
-        File selectedFile = chooser.getSelectedFile();
-
-
         String srcDir = selectedDir.getAbsolutePath();
 
-        System.out.println(srcDir);
-        System.out.println("File: " + selectedFile);
+        setDir(srcDir);
+    }
 
-        ArrayList<String> folders = new ArrayList<String>();
+    public void run() {
+
+
+        createUI();
+
+
+        //String srcDir = selectedDir.getAbsolutePath();
+
+        System.out.println(srcDir);
+
+        /*ArrayList<String> folders = new ArrayList<String>();
         ArrayList<String> filenames = new ArrayList<String>();
 
 
@@ -88,7 +195,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
 
-        }
+        }*/
 
 
         // skip irrelevant filenames, do stuff for relevant ones
