@@ -46,8 +46,9 @@ Cédric Matthews and Fabrice P. Cordelieres, MetroloJ : an ImageJ plugin to help
 Acknowledgements
 
 Special thanks goes to:
-Robert Haase
-Jean-Yves Tinevez
+
+- Robert Haase
+- Jean-Yves Tinevez
 For their help and guidance
 
 NEUBIAS and NEUBIAS TS11 organisers for creating the environment
