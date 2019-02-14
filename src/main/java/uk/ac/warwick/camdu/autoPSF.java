@@ -10,25 +10,31 @@ package uk.ac.warwick.camdu;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.Roi;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import ij.plugin.Duplicator;
+import ij.WindowManager;
+import ij.gui.Roi;
+import ij.measure.Calibration;
 import ij.process.FloatPolygon;
+import ij.process.ImageProcessor;
 import loci.formats.FormatException;
 import loci.plugins.BF;
 
-import metroloJ.resolution.PSFprofiler;
 import net.imagej.ImageJ;
+import net.imagej.ops.Ops;
+import net.imagej.ops.special.computer.Computers;
+import net.imagej.ops.special.computer.UnaryComputerOp;
+import net.imglib2.*;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -38,6 +44,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 
 
 /**
@@ -49,12 +56,15 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     @Parameter
     private ImageJ ij;
 
+
+
     String ext = ".dv";
     int beads = 3;
     double corr_factor_x = 1.186;
     double corr_factor_y = 1.186;
     double corr_factor_z = 1.186;
     int minSeparation = 15;
+    Calibration calibration;
 
     String srcDir = "";
 
@@ -104,11 +114,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         JButton browseBtn = new JButton("Browse:");
 
-        browseBtn.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                browseButtonActionPerformed(e);
-            }
-        });
+        browseBtn.addActionListener(e -> browseButtonActionPerformed(e));
 
 
 
@@ -157,7 +163,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     private void browseButtonActionPerformed(ActionEvent e) {
         JFileChooser chooser = new JFileChooser();
-        int returnVal= (int) chooser.showOpenDialog(this);
+        chooser.showOpenDialog(this);
 
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
@@ -172,30 +178,39 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         createUI();
 
-
+        ij = new net.imagej.ImageJ();
         //String srcDir = selectedDir.getAbsolutePath();
 
         System.out.println(srcDir);
 
-        /*ArrayList<String> folders = new ArrayList<String>();
+        ArrayList<String> folders = new ArrayList<String>();
         ArrayList<String> filenames = new ArrayList<String>();
 
+        File selectedDir = new File(srcDir);
 
+        Img<FloatType> currentFile;
 
-        for (final File fileEntry : selectedDir.listFiles()){
+        for (final File fileEntry : Objects.requireNonNull(selectedDir.listFiles())){
 
             if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("psf")){
 
                 System.out.println("Processing file: " + fileEntry.getName());
                 String path = selectedDir + File.separator + fileEntry.getName();
 
-                readFile(path, selectedDir);
+                currentFile = readFile(path, selectedDir);
+
+                double[][] finalResult = processing(currentFile);
+
+                String resultPath = selectedDir + File.separator + "summary.csv";
+
+                WriteFile(resultPath,finalResult);
+
             }
 
 
 
 
-        }*/
+        }
 
 
         // skip irrelevant filenames, do stuff for relevant ones
@@ -203,7 +218,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     }
 
-    public void readFile(String arg, File selectDir) {
+    private Img<FloatType> readFile(String arg, File selectDir) {
 
         //  OpenDialog od = new OpenDialog("Open Image File...", arg);
         //  String dir = od.getDirectory();
@@ -222,75 +237,65 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
             imps = BF.openImagePlus(arg);
             imp = imps[0];
-            //imgFinal = ImageJFunctions.convertFloat(imps[0]);
-            // ij.ui().show(imgFinal);
+            calibration = imp.getCalibration();
+
+            imgFinal = ImageJFunctions.convertFloat(imps[0]);
             // for (ImagePlus imp : imps) imp.show();
             // We don't need to show them
 
-        } catch (FormatException exc) {
-
-            IJ.error("Sorry, an error occurred: " + exc.getMessage());
-
-        } catch (IOException exc) {
+        } catch (FormatException | IOException exc) {
 
             IJ.error("Sorry, an error occurred: " + exc.getMessage());
 
         }
 
-        double[][] finalResult = processing(imp);
+        return imgFinal;
 
-        String resultPath = selectDir + File.separator + "summary.csv";
-
-        WriteFile(resultPath,finalResult);
 
 
 
     }
 
-    public double[][] processing(ImagePlus image){
+    public double[][] processing(Img image){
+    //private void processing(Img<FloatType> image){
+
 
         IJ.run("Set Measurements...", "min centroid integrated redirect=None decimal=3");
         System.out.println("Opened file, processing");
-        image.show();
 
+        //ImageJFunctions.show(image);
         // Crops the image to get middle of the field of view
-        IJ.run("Specify...", "width=300 height=300 x=512 y=512 slice=1 centered");
-        IJ.run("Crop");
+        FinalInterval interval = FinalInterval.createMinSize(362,362,0,300,300,image.dimension(2));
+        RandomAccessibleInterval cropped;
+        cropped  = ij.op().transform().crop(image,interval, true);
 
-        ImagePlus croppedImage = IJ.getImage();
+//        ImageJFunctions.show(cropped);
+        int[] projected_dimensions = new int[cropped.numDimensions() - 1];
 
-        float[] stats= new float[croppedImage.getNSlices()];
-
-        int slicePos = 1;
-
-        float maxStd = -1;
-
-        // loops over stack Finds the in Focus slice
-        for (int i=1; i < croppedImage.getNSlices(); i++){
-
-            ImagePlus myslice = new Duplicator().run(croppedImage, i, i);
-
-           double aux = myslice.getStatistics().stdDev;
-
-            if (aux > maxStd){
-                maxStd = (float) aux;
-                slicePos=i;
-
-            }
-
-            System.out.println("In focus slice: " + slicePos);
-
+        int dim = 2;
+        int d;
+        for (d = 0; d < cropped.numDimensions(); ++d) {
+            if (d != dim) projected_dimensions[d] = (int) cropped.dimension(d);
         }
 
-        ImagePlus infocusSlice = new Duplicator().run(croppedImage, slicePos, slicePos);
-        infocusSlice.show();
+        Img<FloatType> proj = ij.op().create().img(
+                new FinalDimensions(projected_dimensions), new FloatType());
+
+        UnaryComputerOp maxOp = Computers.unary(ij.op(),Ops.Stats.Max.class,RealType.class, Iterable.class);
+
+        Img<T> projection = (Img<T>) ij.op().transform().project(proj, cropped, maxOp, 2);
+        ImageJFunctions.show(proj);
+
+
+
 
         // detect beads and measure for intensity and x/y coords
-        IJ.run("Find Maxima...", "noise=30 output=[Point Selection] exclude");
-
+        IJ.run("Find Maxima...", "noise=20 output=[Point Selection] exclude");
+        ImagePlus imp = IJ.getImage();
         // Gets coordinates of ROIs
-        Roi roi = infocusSlice.getRoi();
-        FloatPolygon floatPolygon = roi.getFloatPolygon();
+
+        Roi test = imp.getRoi();
+        FloatPolygon floatPolygon = test.getFloatPolygon();
 
         float[][] resultsTable = new float[floatPolygon.npoints][3];
 
@@ -299,22 +304,24 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
             float intx = floatPolygon.xpoints[i];
             float inty = floatPolygon.ypoints[i];
-
-            int[] pixel = infocusSlice.getPixel( (int) intx, (int) inty);
+            final RandomAccess<FloatType> r = proj.randomAccess();
+            r.setPosition((int) intx,0);
+            r.setPosition((int) inty,1);
+            FloatType pixel = r.get();
 
             resultsTable[i-1][0] = intx;
             resultsTable[i-1][1] = inty;
-            resultsTable[i-1][2] = (float) pixel[0];
+            resultsTable[i-1][2] = pixel.get();
 
         }
 
-        System.out.println("ResultTable size " + resultsTable.length);
+
 
         // Sorts the Pixel coordinates by the intensity value.
         java.util.Arrays.sort(resultsTable, new java.util.Comparator<float[]>() {
                     public int compare(float[] a, float[] b) {
 
-                        return Double.compare(a[0], b[0]);
+                        return Double.compare(a[2], b[2]);
 
                     }
                 });
@@ -324,7 +331,6 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         double goodX[] = new double[beads];
         double goodY[] = new double[beads];
 
-        System.out.println("Created table of size " + resultsTable.length);
 
         // selects the selected number of pixels based on the specified criteria
         while (countSpots < beads && firstPosition < resultsTable.length ){
@@ -332,7 +338,6 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             float x1 = resultsTable[firstPosition][0];
 
             float y1 = resultsTable[firstPosition][1];
-            System.out.println("First Pos: " + x1 + " " + y1);
 
             int nextPosition = firstPosition + 1;
             boolean valid = true;
@@ -366,32 +371,29 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         }
 
-        System.out.println("Spot 1: " + goodX[0] + " " + goodY[0]);
-        System.out.println("Spot 2: " + goodX[1] + " " + goodY[1]);
-        System.out.println("Spot 3: " + goodX[2] + " " + goodY[2]);
 
 
         double[][] finalResults  = new double[beads][3];
-
+        //ij.ui().showUI();
         // loops over selected pixels and crops out the PSFs
         for (int i = 0; i < goodX.length; i++){
+            interval = FinalInterval.createMinSize((int)goodX[i]-10,(int)goodY[i]-10,0,20,20,cropped.dimension(2));
+            RandomAccessibleInterval newcropped  = ij.op().transform().crop(cropped,interval, true);
+            ImagePlus IPcropped = ImageJFunctions.wrapFloat(newcropped, "test");
+            IPcropped.setDimensions(1, (int) newcropped.dimension(2), 1);
+            IPcropped.setOpenAsHyperStack(true);
+            ImageProcessor ip = IPcropped.getProcessor();
+            ip.resetMinAndMax();
 
-            ImagePlus PSFimage = new Duplicator().run(croppedImage, 1, croppedImage.getNSlices());
-            PSFimage.show();
+            IPcropped.setCalibration(calibration);
+
+
 
             // crops stack around the specified coordinates
-            IJ.run(PSFimage, "Specify...", "width=20 height=20 x=" + goodX[i] + " y=" + goodY[i] + " slice=1 centered");
-            IJ.run("Crop");
-            ImagePlus croppedPSF = IJ.getImage();
-
-            croppedImage.show();
 
             // calls GetRes to extract the resolution form the PSFs
-            double[] qcMetrics = GetRes(croppedPSF);
+            double[] qcMetrics = GetRes(IPcropped);
 
-            System.out.println("QC values " + qcMetrics[0]);
-            System.out.println("QC values " + qcMetrics[1]);
-            System.out.println("QC values " + qcMetrics[2]);
 
             // multiply by the correction factor
             double xRes = qcMetrics[0] * corr_factor_x;
@@ -402,10 +404,10 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             finalResults[i][1] = yRes;
             finalResults[i][2] = zRes;
 
+
         }
 
-        System.out.println("Final Results " + Arrays.deepToString(finalResults));
-
+        WindowManager.closeAllWindows();
         return finalResults;
 
     }
@@ -419,7 +421,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             try {
                 fileWriter = new FileWriter(FilePath);
                 //Write the CSV file header
-                fileWriter.append("x_resolution"+COMMA_DELIMITER+"y_resolution"+COMMA_DELIMITER+"z_resolution");
+                fileWriter.append("x_resolution").append(COMMA_DELIMITER).append("y_resolution").append(COMMA_DELIMITER).append("z_resolution");
                 //Add a new line separator after the header
                 fileWriter.append(NEW_LINE_SEPARATOR);
                 int Datalength = BeatResArray.length;
@@ -443,6 +445,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
                 try {
 
+                    assert fileWriter != null;
                     fileWriter.flush();
                     fileWriter.close();
 
@@ -490,8 +493,8 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
             // invoke the plugin
            // ij.command().run(autoPSF.class, true);
-        autoPSF test = new autoPSF();
-        test.run();
+        autoPSF main_class = new autoPSF();
+        main_class.run();
         }
     }
 

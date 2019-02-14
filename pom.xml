@@ -153,11 +153,7 @@
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej-legacy</artifactId>
-			<version>0.29.0</version>
-		</dependency>
+
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>formats-api</artifactId>
@@ -167,13 +163,7 @@
 			<artifactId>ij</artifactId>
 			<version>1.52i</version>
 		</dependency>
-		<dependency>
-		<groupId>metroloJ</groupId>
-		<artifactId>MetroloJ</artifactId>
-		<version>1.0</version>
-		<scope>system</scope>
-		<systemPath>/home/erick/Downloads/Fiji.app/plugins/metroloj_.jar</systemPath>
-	</dependency>
+
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>bio-formats_plugins</artifactId>
@@ -184,6 +174,21 @@
 				<artifactId>jhdf5</artifactId>
 			</exclusion>
 			</exclusions>
+		</dependency>
+        <dependency>
+            <groupId>net.imglib2</groupId>
+            <artifactId>imglib2-ij</artifactId>
+            <version>2.0.0-beta-44</version>
+        </dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-ops</artifactId>
+			<version>0.43.2</version>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-ops</artifactId>
+			<version>0.43.2</version>
 		</dependency>
 	</dependencies>
 
