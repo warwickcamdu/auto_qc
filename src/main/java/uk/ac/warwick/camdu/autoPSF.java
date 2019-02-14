@@ -275,7 +275,14 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         //ImageJFunctions.show(image);
         // Crops the image to get middle of the field of view
-        FinalInterval interval = FinalInterval.createMinSize(image.dimension(0)-150,image.dimension(1)-150,0,300,300,image.dimension(2));
+
+        FinalInterval interval = FinalInterval.createMinSize(0,0,0,image.dimension(0),image.dimension(1),image.dimension(2));
+        if (image.dimension(0) > 300 && image.dimension(1) > 300){
+            System.out.println(image.dimension(0));
+            interval = FinalInterval.createMinSize(image.dimension(0)/2-150,image.dimension(1)/2-150,0,300,300,image.dimension(2));
+        }
+
+
         RandomAccessibleInterval cropped;
         cropped  = ij.op().transform().crop(image,interval, true);
 
@@ -387,7 +394,14 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         //ij.ui().showUI();
         // loops over selected pixels and crops out the PSFs
         for (int i = 0; i < goodX.length; i++){
-            interval = FinalInterval.createMinSize((int)goodX[i]-10,(int)goodY[i]-10,0,20,20,cropped.dimension(2));
+
+            interval = FinalInterval.createMinSize(0,0,0,20,20,cropped.dimension(2));
+
+            if (goodX[i]>10 && goodY[i]>10){
+                interval = FinalInterval.createMinSize((int)goodX[i]-10,(int)goodY[i]-10,0,20,20,cropped.dimension(2));
+            }
+
+
             RandomAccessibleInterval newcropped  = ij.op().transform().crop(cropped,interval, true);
             ImagePlus IPcropped = ImageJFunctions.wrapFloat(newcropped, "test");
             IPcropped.setDimensions(1, (int) newcropped.dimension(2), 1);

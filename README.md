@@ -127,8 +127,6 @@ Calls the PSF Profiler of MetroloJ on cropped PSF
 ----------------------------------------------------------------------------------------
 ToDo:
 
-Sanitising inputs (dimensions, location of beads)
-
 Documentation of the code
 
 Other Jython scripts
