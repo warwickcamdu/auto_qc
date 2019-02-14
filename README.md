@@ -49,6 +49,7 @@ Special thanks goes to:
 
 - Robert Haase
 - Jean-Yves Tinevez
+
 For their help and guidance
 
 NEUBIAS and NEUBIAS TS11 organisers for creating the environment
