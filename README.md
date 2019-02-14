@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/169840753.svg)](https://zenodo.org/badge/latestdoi/169840753)
+
+
 ImageJ plugin auto_qc
 
 Created by group 4 of the NEUBIAS trainingschool 11.
