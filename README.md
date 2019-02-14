@@ -4,13 +4,13 @@ Created by group 4 of the NEUBIAS trainingschool 11.
 
 Erick Ratamero, Cesar Augusto Valades Cruz, Christopher Schmied, Jan Eckhardt, Paul Stroe.
 
+Continuing development by Erick Ratamero, experimental input from Claire Mitchell
+https://www.warwick.ac.uk/camdu
+
 Based on the .py script auto_PSF.py from Erick Ratamero:
 https://github.com/erickmartins/autoQC/blob/master/auto_PSF.py
 
 
-IMPORTANT: Depends on a .jar from MetroloJ!
-Please download from the website:
-http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:metroloj:start
 
 ==========================================================================================
 Citations:
@@ -25,6 +25,7 @@ Uses the following plugins:
 bioformats (https://www.openmicroscopy.org/bio-formats/)
 Melissa Linkert, Curtis T. Rueden, Chris Allan, Jean-Marie Burel, Will Moore, Andrew Patterson, Brian Loranger, Josh Moore, Carlos Neves, Donald MacDonald, Aleksandra Tarkowska, Caitlin Sticco, Emma Hill, Mike Rossner, Kevin W. Eliceiri, and Jason R. Swedlow (2010) Metadata matters: access to image data in the real world. The Journal of Cell Biology 189(5), 777-782. doi: 10.1083/jcb.201004104
 
+Uses code from:
 MetroloJ (http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:metroloj:start)
 Cédric Matthews and Fabrice P. Cordelieres, MetroloJ : an ImageJ plugin to help monitor microscopes' health, in ImageJ User & Developer Conference 2010 proceedings
 
@@ -44,12 +45,7 @@ Title: Automatic PSF quality measurement
 
 Input file: a file of the specified file format (file extension) containing the string "psf"
 
-Example data used for testing this was named 100_psf_auxin_sf01_R3D.dv
-
-Dimension: 1024x1024x21 16Bit
-
-
-Pixelsize: 0.04031x0.04031x0.15 micron (Metadata matters)
+Dimension: at least 300x300
 
 Content: PSFs from flourescent beads
          The usual PSF measurement criteria apply:
@@ -58,10 +54,9 @@ Content: PSFs from flourescent beads
 Output: summary table with quality measurements per bead
         Will be written into the base input directory
 
-Input parameters - mostly hardcoded for now
+Input parameters 
 
-- Input file - GUI interaction that points to any file where the input files are
-    From this the base directory is extracted
+- Input directory - GUI interaction that points to the directory where input data is
 
 - File extension: self-explanatory
 
@@ -69,7 +64,7 @@ Input parameters - mostly hardcoded for now
 
 - Correction factors: multiplying factor for the FWHM resolution output from MetroloJ, per dimension
 
-- minSeparation: minimal distance (probably in pixels?) that two PSFs need to be separated by to be considered
+- minSeparation: minimal distance (in pixels) that two PSFs need to be separated by to be considered
 
 Description:
 
@@ -116,17 +111,8 @@ Calls the PSF Profiler of MetroloJ on cropped PSF
 ----------------------------------------------------------------------------------------
 ToDo:
 
-User interaction with GUI
-
-Images are shown at the moment (batchmode?)
-
-Close opened images
+Sanitising inputs (dimensions, location of beads)
 
 Documentation of the code
 
-Refactor
-
-Clean up code
-
-
-
+Other Jython scripts

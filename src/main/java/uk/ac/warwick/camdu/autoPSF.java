@@ -275,7 +275,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         //ImageJFunctions.show(image);
         // Crops the image to get middle of the field of view
-        FinalInterval interval = FinalInterval.createMinSize(362,362,0,300,300,image.dimension(2));
+        FinalInterval interval = FinalInterval.createMinSize(image.dimension(0)-150,image.dimension(1)-150,0,300,300,image.dimension(2));
         RandomAccessibleInterval cropped;
         cropped  = ij.op().transform().crop(image,interval, true);
 
