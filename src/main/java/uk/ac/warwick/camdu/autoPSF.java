@@ -162,15 +162,25 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     }
 
     private void browseButtonActionPerformed(ActionEvent e) {
+
         JFileChooser chooser = new JFileChooser();
-        chooser.showOpenDialog(this);
-
+        chooser.setCurrentDirectory(new java.io.File("."));
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setAcceptAllFileFilterUsed(true);
+        //chooser.showOpenDialog(this);
+        String sourceDir = "";
 
-        File selectedDir = chooser.getCurrentDirectory();
-        String srcDir = selectedDir.getAbsolutePath();
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File selectedDir = chooser.getSelectedFile();
+            sourceDir = selectedDir.getAbsolutePath();
 
-        setDir(srcDir);
+        }
+        else {
+            System.out.println("No Selection ");
+        }
+
+
+        setDir(sourceDir);
     }
 
     public void run() {
