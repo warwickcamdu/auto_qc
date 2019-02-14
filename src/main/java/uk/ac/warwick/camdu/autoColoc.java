@@ -1,3 +1,5 @@
+package uk.ac.warwick.camdu;
+
 /*
  * To the extent possible under law, the ImageJ developers have waived
  * all copyright and related or neighboring rights to this tutorial code.
@@ -6,7 +8,6 @@
  *     http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-package uk.ac.warwick.camdu;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -49,7 +50,7 @@ import java.util.Objects;
  */
 
 @Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoColoc")
-public class autoPSF<T extends RealType<T>> extends Component implements Command {
+public class autoColoc<T extends RealType<T>> extends Component implements Command {
 
     @Parameter
     private ImageJ ij;
@@ -265,7 +266,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     }
 
     public double[][] processing(Img image){
-    //private void processing(Img<FloatType> image){
+        //private void processing(Img<FloatType> image){
 
 
         IJ.run("Set Measurements...", "min centroid integrated redirect=None decimal=3");
@@ -334,12 +335,12 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         // Sorts the Pixel coordinates by the intensity value.
         java.util.Arrays.sort(resultsTable, new java.util.Comparator<float[]>() {
-                    public int compare(float[] a, float[] b) {
+            public int compare(float[] a, float[] b) {
 
-                        return Double.compare(a[2], b[2]);
+                return Double.compare(a[2], b[2]);
 
-                    }
-                });
+            }
+        });
 
         int countSpots = 0;
         int firstPosition = 1;
@@ -437,48 +438,48 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     public static boolean WriteFile(String FilePath, double[][] BeatResArray){
 
-            String COMMA_DELIMITER = ",";
-            String NEW_LINE_SEPARATOR = "\n";
-            FileWriter fileWriter = null;
-            try {
-                fileWriter = new FileWriter(FilePath);
-                //Write the CSV file header
-                fileWriter.append("x_resolution").append(COMMA_DELIMITER).append("y_resolution").append(COMMA_DELIMITER).append("z_resolution");
-                //Add a new line separator after the header
+        String COMMA_DELIMITER = ",";
+        String NEW_LINE_SEPARATOR = "\n";
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(FilePath);
+            //Write the CSV file header
+            fileWriter.append("x_resolution").append(COMMA_DELIMITER).append("y_resolution").append(COMMA_DELIMITER).append("z_resolution");
+            //Add a new line separator after the header
+            fileWriter.append(NEW_LINE_SEPARATOR);
+            int Datalength = BeatResArray.length;
+            for (int x = 0; x <Datalength; x++)
+            {
+
+                fileWriter.append(String.valueOf(BeatResArray[x][0]));
+                fileWriter.append(COMMA_DELIMITER);
+                fileWriter.append(String.valueOf(BeatResArray[x][1]));
+                fileWriter.append(COMMA_DELIMITER);
+                fileWriter.append(String.valueOf(BeatResArray[x][2]));
                 fileWriter.append(NEW_LINE_SEPARATOR);
-                int Datalength = BeatResArray.length;
-                for (int x = 0; x <Datalength; x++)
-                {
 
-                    fileWriter.append(String.valueOf(BeatResArray[x][0]));
-                    fileWriter.append(COMMA_DELIMITER);
-                    fileWriter.append(String.valueOf(BeatResArray[x][1]));
-                    fileWriter.append(COMMA_DELIMITER);
-                    fileWriter.append(String.valueOf(BeatResArray[x][2]));
-                    fileWriter.append(NEW_LINE_SEPARATOR);
+            }
+        } catch (Exception e) {
 
-                }
-            } catch (Exception e) {
+            System.out.println("Error in CsvFileWriter !!!");
+            e.printStackTrace();
 
-                System.out.println("Error in CsvFileWriter !!!");
+        } finally {
+
+            try {
+
+                assert fileWriter != null;
+                fileWriter.flush();
+                fileWriter.close();
+
+            } catch (IOException e) {
+
+                System.out.println("Error while flushing/closing fileWriter !!!");
                 e.printStackTrace();
 
-            } finally {
-
-                try {
-
-                    assert fileWriter != null;
-                    fileWriter.flush();
-                    fileWriter.close();
-
-                } catch (IOException e) {
-
-                    System.out.println("Error while flushing/closing fileWriter !!!");
-                    e.printStackTrace();
-
-                }
             }
-            return true;
+        }
+        return true;
 
     }
 
@@ -507,17 +508,18 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         //final File file = ij.ui().chooseFile(null, "open");
 
         //if (file != null) {
-            // load the dataset
-           // final Dataset dataset = ij.scifio().datasetIO().open(file.getPath());
+        // load the dataset
+        // final Dataset dataset = ij.scifio().datasetIO().open(file.getPath());
 
-            // show the image
-           // ij.ui().show(dataset);
+        // show the image
+        // ij.ui().show(dataset);
 
-            // invoke the plugin
-           // ij.command().run(autoColoc.class, true);
+        // invoke the plugin
+        // ij.command().run(autoColoc.class, true);
         autoColoc main_class = new autoColoc();
         main_class.run();
-        }
     }
+}
+
 
 
