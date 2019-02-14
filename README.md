@@ -4,10 +4,14 @@ Created by group 4 of the NEUBIAS trainingschool 11.
 
 Erick Ratamero, Cesar Augusto Valades Cruz, Christopher Schmied, Jan Eckhardt, Paul Stroe.
 
+
 Continuing development by Erick Ratamero, experimental input from Claire Mitchell
+
 https://www.warwick.ac.uk/camdu
 
+
 Based on the .py script auto_PSF.py from Erick Ratamero:
+
 https://github.com/erickmartins/autoQC/blob/master/auto_PSF.py
 
 
@@ -15,19 +19,28 @@ https://github.com/erickmartins/autoQC/blob/master/auto_PSF.py
 ==========================================================================================
 Citations:
 
+
 Based on ImageJ:
+
 Schneider, C. A.; Rasband, W. S. & Eliceiri, K. W. (2012), "NIH Image to ImageJ: 25 years of image analysis", Nature methods 9(7): 671-675, PMID 22930834
 
 Used to run Fiji in the background:
+
 Schindelin, J.; Arganda-Carreras, I. & Frise, E. et al. (2012), "Fiji: an open-source platform for biological-image analysis", Nature methods 9(7): 676-682, PMID 22743772, doi:10.1038/nmeth.2019
 
+
 Uses the following plugins:
+
 bioformats (https://www.openmicroscopy.org/bio-formats/)
+
 Melissa Linkert, Curtis T. Rueden, Chris Allan, Jean-Marie Burel, Will Moore, Andrew Patterson, Brian Loranger, Josh Moore, Carlos Neves, Donald MacDonald, Aleksandra Tarkowska, Caitlin Sticco, Emma Hill, Mike Rossner, Kevin W. Eliceiri, and Jason R. Swedlow (2010) Metadata matters: access to image data in the real world. The Journal of Cell Biology 189(5), 777-782. doi: 10.1083/jcb.201004104
 
+
 Uses code from:
+
 MetroloJ (http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:metroloj:start)
 Cédric Matthews and Fabrice P. Cordelieres, MetroloJ : an ImageJ plugin to help monitor microscopes' health, in ImageJ User & Developer Conference 2010 proceedings
+
 
 ==========================================================================================
 Acknowledgements
@@ -40,6 +53,7 @@ For their help and guidance
 NEUBIAS and NEUBIAS TS11 organisers for creating the environment
 
 ==========================================================================================
+
 
 Title: Automatic PSF quality measurement
 
