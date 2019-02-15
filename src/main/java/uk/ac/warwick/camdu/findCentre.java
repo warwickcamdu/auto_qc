@@ -12,7 +12,6 @@ import ij.gui.Wand;
 import ij.process.EllipseFitter;
 import ij.process.ImageConverter;
 import ij.process.ImageStatistics;
-import utilities.segmentation.HistogramSegmentation;
 
 public class findCentre {
     public static final int XY = 0;
