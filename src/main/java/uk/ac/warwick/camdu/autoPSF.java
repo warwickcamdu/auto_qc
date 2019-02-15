@@ -48,7 +48,7 @@ import java.util.Objects;
 /**
  */
 
-@Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoPSF")
+@Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoFOV")
 public class autoPSF<T extends RealType<T>> extends Component implements Command {
 
     @Parameter
@@ -515,7 +515,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
             // invoke the plugin
            // ij.command().run(autoColoc.class, true);
-        autoColoc main_class = new autoColoc();
+        autoPSF main_class = new autoPSF();
         main_class.run();
         }
     }
