@@ -48,7 +48,7 @@ import java.util.Objects;
 /**
  */
 
-@Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoFOV")
+@Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoPSF")
 public class autoPSF<T extends RealType<T>> extends Component implements Command {
 
     @Parameter
