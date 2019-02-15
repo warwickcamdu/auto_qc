@@ -11,27 +11,24 @@ package uk.ac.warwick.camdu;
 
 import ij.IJ;
 import ij.ImagePlus;
-
-import java.awt.event.ActionEvent;
-import java.io.FileWriter;
-import java.io.IOException;
-
 import ij.WindowManager;
 import ij.gui.Roi;
 import ij.measure.Calibration;
+import ij.plugin.ChannelSplitter;
 import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import loci.formats.FormatException;
 import loci.plugins.BF;
-
 import net.imagej.ImageJ;
 import net.imagej.ops.Ops;
 import net.imagej.ops.special.computer.Computers;
 import net.imagej.ops.special.computer.UnaryComputerOp;
-import net.imglib2.*;
+import net.imglib2.FinalDimensions;
+import net.imglib2.FinalInterval;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
-
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -41,8 +38,12 @@ import org.scijava.plugin.Plugin;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 
 
@@ -59,11 +60,10 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
     String ext = ".dv";
     int beads = 3;
-    double corr_factor_x = 1.186;
-    double corr_factor_y = 1.186;
-    double corr_factor_z = 1.186;
     int minSeparation = 15;
     Calibration calibration;
+    static String COMMA_DELIMITER = ",";
+    static String NEW_LINE_SEPARATOR = "\n";
 
     String srcDir = "";
 
@@ -74,21 +74,6 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
     public void setBeads(int beadnum){
         beads = beadnum;
-
-    }
-
-    public void setCorrX(double corr_x){
-        corr_factor_x = corr_x;
-
-    }
-
-    public void setCorrY(double corr_y){
-        corr_factor_y = corr_y;
-
-    }
-
-    public void setCorrZ(double corr_z){
-        corr_factor_z = corr_z;
 
     }
 
@@ -103,13 +88,30 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
     }
 
 
+
+    public FileWriter printOutputHeader(String FilePath){
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(FilePath);
+            //Write the CSV file header
+            fileWriter.append("file_id"+COMMA_DELIMITER+"bead_id"+COMMA_DELIMITER+"red-green"+COMMA_DELIMITER+"green-blue"+COMMA_DELIMITER+"red-blue");
+            //Add a new line separator after the header
+            fileWriter.append(NEW_LINE_SEPARATOR);
+
+        } catch (Exception e) {
+
+            System.out.println("Error in CsvFileWriter !!!");
+            e.printStackTrace();
+
+        }
+
+        return fileWriter;
+    }
+
     public void createUI(){
         JTextField extField = new JTextField(".dv",10);
-        JTextField beadField = new JTextField("5",5);
-        JTextField corrXField = new JTextField("1.168",5);
-        JTextField corrYField = new JTextField("1.168",5);
-        JTextField corrZField = new JTextField("1.168",5);
-        JTextField sepField = new JTextField("15",5);
+        JTextField beadField = new JTextField("1",5);
+        JTextField sepField = new JTextField("30",5);
 
         JButton browseBtn = new JButton("Browse:");
 
@@ -129,15 +131,6 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
         myPanel.add(new JLabel("Number of beads:"));
         myPanel.add(beadField);
 
-        myPanel.add(new JLabel("Correction factor (x):"));
-        myPanel.add(corrXField);
-
-        myPanel.add(new JLabel("Correction factor (y):"));
-        myPanel.add(corrYField);
-
-        myPanel.add(new JLabel("Correction factor (z):"));
-        myPanel.add(corrZField);
-
         myPanel.add(new JLabel("Minimum bead separation (px):"));
         myPanel.add(sepField);
 
@@ -151,9 +144,6 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
         setExtension(extField.getText());
         setBeads(Integer.parseInt(beadField.getText()));
-        setCorrX(Double.parseDouble(corrXField.getText()));
-        setCorrY(Double.parseDouble(corrYField.getText()));
-
         setMinSep(Integer.parseInt(sepField.getText()));
 
 
@@ -198,10 +188,12 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
         File selectedDir = new File(srcDir);
 
         Img<FloatType> currentFile;
+        String resultPath = selectedDir + File.separator + "summary_coloc.csv";
+        FileWriter fw = printOutputHeader(resultPath);
 
         for (final File fileEntry : Objects.requireNonNull(selectedDir.listFiles())){
 
-            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("psf")){
+            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("coloc")){
 
                 System.out.println("Processing file: " + fileEntry.getName());
                 String path = selectedDir + File.separator + fileEntry.getName();
@@ -210,9 +202,9 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
                 double[][] finalResult = processing(currentFile);
 
-                String resultPath = selectedDir + File.separator + "summary.csv";
 
-                WriteFile(resultPath,finalResult);
+
+                WriteFile(fw, resultPath,fileEntry.getName(),finalResult);
 
             }
 
@@ -221,7 +213,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
         }
 
-
+        CloseFile(fw);
         // skip irrelevant filenames, do stuff for relevant ones
 
 
@@ -275,20 +267,19 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
         //ImageJFunctions.show(image);
         // Crops the image to get middle of the field of view
 
-        FinalInterval interval = FinalInterval.createMinSize(0,0,0,image.dimension(0),image.dimension(1),image.dimension(2));
+        FinalInterval interval = FinalInterval.createMinSize(0,0,0,0,image.dimension(0),image.dimension(1),image.dimension(2),image.dimension(3));
         if (image.dimension(0) > 300 && image.dimension(1) > 300){
             System.out.println(image.dimension(0));
-            interval = FinalInterval.createMinSize(image.dimension(0)/2-150,image.dimension(1)/2-150,0,300,300,image.dimension(2));
+            interval = FinalInterval.createMinSize(image.dimension(0)/2-150,image.dimension(1)/2-150,0,0,300,300,image.dimension(2),image.dimension(3));
         }
 
 
         RandomAccessibleInterval cropped;
         cropped  = ij.op().transform().crop(image,interval, true);
-
 //        ImageJFunctions.show(cropped);
         int[] projected_dimensions = new int[cropped.numDimensions() - 1];
 
-        int dim = 2;
+        int dim = 3;
         int d;
         for (d = 0; d < cropped.numDimensions(); ++d) {
             if (d != dim) projected_dimensions[d] = (int) cropped.dimension(d);
@@ -299,14 +290,15 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
         UnaryComputerOp maxOp = Computers.unary(ij.op(),Ops.Stats.Max.class,RealType.class, Iterable.class);
 
-        Img<T> projection = (Img<T>) ij.op().transform().project(proj, cropped, maxOp, 2);
-        ImageJFunctions.show(proj);
+        Img<T> projection = (Img<T>) ij.op().transform().project(proj, cropped, maxOp, 3);
 
-
-
+        interval = FinalInterval.createMinSize(0,0,0,proj.dimension(0),proj.dimension(1),1);
+        RandomAccessibleInterval finalcrop;
+        finalcrop  = ij.op().transform().crop(proj,interval, true);
+        ImageJFunctions.show(finalcrop);
 
         // detect beads and measure for intensity and x/y coords
-        IJ.run("Find Maxima...", "noise=20 output=[Point Selection] exclude");
+        IJ.run("Find Maxima...", "noise=200 output=[Point Selection] exclude");
         ImagePlus imp = IJ.getImage();
         // Gets coordinates of ROIs
 
@@ -320,6 +312,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
             float intx = floatPolygon.xpoints[i];
             float inty = floatPolygon.ypoints[i];
+
             final RandomAccess<FloatType> r = proj.randomAccess();
             r.setPosition((int) intx,0);
             r.setPosition((int) inty,1);
@@ -358,23 +351,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
             int nextPosition = firstPosition + 1;
             boolean valid = true;
 
-            while (valid && nextPosition < resultsTable.length){
 
-                float x2 = resultsTable[nextPosition][0];
-                float y2 = resultsTable[nextPosition][1];
-
-                double dist_sq = Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
-
-                if (x2 != x1 && y2 != y1 && dist_sq < Math.pow(minSeparation,2)){
-
-                    valid = false;
-
-                }
-
-                nextPosition++;
-
-
-            }
 
             if (valid){
                 goodX[countSpots] = resultsTable[firstPosition][0];
@@ -389,21 +366,20 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
 
 
-        double[][] finalResults  = new double[beads][3];
+        double[][] finalResults  = new double[beads][4];
         //ij.ui().showUI();
         // loops over selected pixels and crops out the PSFs
         for (int i = 0; i < goodX.length; i++){
 
-            interval = FinalInterval.createMinSize(0,0,0,20,20,cropped.dimension(2));
+            interval = FinalInterval.createMinSize(0,0,0,0,20,20,cropped.dimension(2),cropped.dimension(3));
 
-            if (goodX[i]>10 && goodY[i]>10){
-                interval = FinalInterval.createMinSize((int)goodX[i]-10,(int)goodY[i]-10,0,20,20,cropped.dimension(2));
+            if (goodX[i]>25 && goodY[i]>25){
+                interval = FinalInterval.createMinSize((int)goodX[i]-15,(int)goodY[i]-15,0,0,30,30,cropped.dimension(2),cropped.dimension(3));
             }
-
 
             RandomAccessibleInterval newcropped  = ij.op().transform().crop(cropped,interval, true);
             ImagePlus IPcropped = ImageJFunctions.wrapFloat(newcropped, "test");
-            IPcropped.setDimensions(1, (int) newcropped.dimension(2), 1);
+            IPcropped.setDimensions((int) newcropped.dimension(2), (int) newcropped.dimension(3), 1);
             IPcropped.setOpenAsHyperStack(true);
             ImageProcessor ip = IPcropped.getProcessor();
             ip.resetMinAndMax();
@@ -415,17 +391,19 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
             // crops stack around the specified coordinates
 
             // calls GetRes to extract the resolution form the PSFs
-            double[] qcMetrics = GetRes(IPcropped);
+            ImagePlus[] input = ChannelSplitter.split(IPcropped);
+
+            double[] colorShifts = GetCoal(input);
 
 
             // multiply by the correction factor
-            double xRes = qcMetrics[0] * corr_factor_x;
+            /*double xRes = qcMetrics[0] * corr_factor_x;
             double yRes = qcMetrics[1] * corr_factor_y;
-            double zRes = qcMetrics[2] * corr_factor_z;
-
-            finalResults[i][0] = xRes;
-            finalResults[i][1] = yRes;
-            finalResults[i][2] = zRes;
+            double zRes = qcMetrics[2] * corr_factor_z;*/
+            finalResults[i][0] = i;
+            finalResults[i][1] = colorShifts[0];
+            finalResults[i][2] = colorShifts[1];
+            finalResults[i][3] = colorShifts[2];
 
 
         }
@@ -436,26 +414,25 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
     }
 
 
-    public static boolean WriteFile(String FilePath, double[][] BeatResArray){
+    public static boolean WriteFile(FileWriter fileWriter,String FilePath, String filename, double[][] BeatResArray){
 
-        String COMMA_DELIMITER = ",";
-        String NEW_LINE_SEPARATOR = "\n";
-        FileWriter fileWriter = null;
+
         try {
-            fileWriter = new FileWriter(FilePath);
+
             //Write the CSV file header
-            fileWriter.append("x_resolution").append(COMMA_DELIMITER).append("y_resolution").append(COMMA_DELIMITER).append("z_resolution");
             //Add a new line separator after the header
-            fileWriter.append(NEW_LINE_SEPARATOR);
             int Datalength = BeatResArray.length;
             for (int x = 0; x <Datalength; x++)
             {
-
+                fileWriter.append(filename);
+                fileWriter.append(COMMA_DELIMITER);
                 fileWriter.append(String.valueOf(BeatResArray[x][0]));
                 fileWriter.append(COMMA_DELIMITER);
                 fileWriter.append(String.valueOf(BeatResArray[x][1]));
                 fileWriter.append(COMMA_DELIMITER);
                 fileWriter.append(String.valueOf(BeatResArray[x][2]));
+                fileWriter.append(COMMA_DELIMITER);
+                fileWriter.append(String.valueOf(BeatResArray[x][3]));
                 fileWriter.append(NEW_LINE_SEPARATOR);
 
             }
@@ -464,9 +441,14 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
             System.out.println("Error in CsvFileWriter !!!");
             e.printStackTrace();
 
-        } finally {
+        }
 
-            try {
+        return true;
+
+    }
+
+    public void CloseFile(FileWriter fileWriter){
+        try {
 
                 assert fileWriter != null;
                 fileWriter.flush();
@@ -478,15 +460,22 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
                 e.printStackTrace();
 
             }
-        }
-        return true;
-
     }
 
-    public static double[] GetRes(ImagePlus BeatStack){
 
-        PSFprofiler profiler=new PSFprofiler(BeatStack);
-        return profiler.getResolutions();
+
+    public static double[] GetCoal(ImagePlus beadStack[]){
+        microscope[] micro = new microscope[4];
+        int i;
+        for (i=0;i<4;i++){
+            micro[i] = new microscope(beadStack[0].getCalibration(),microscope.WIDEFIELD,500,1.4,0.0,"","");
+        }
+        coAlignement coal =new coAlignement(beadStack,micro);
+        double[] shifts = new double[3];
+        shifts[0] = coal.RGDistCal;
+        shifts[1] = coal.GBDistCal;
+        shifts[2] = coal.RBDistCal;
+        return shifts;
 
     }
 

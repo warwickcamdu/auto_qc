@@ -209,7 +209,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
                 double[][] finalResult = processing(currentFile);
 
-                String resultPath = selectedDir + File.separator + "summary.csv";
+                String resultPath = selectedDir + File.separator + "summary_PSF.csv";
 
                 WriteFile(resultPath,finalResult);
 

@@ -14,7 +14,7 @@
 
 	<groupId>uk.ac.warwick.camdu</groupId>
 	<artifactId>autoqc</artifactId>
-	<version>0.3.0-SNAPSHOT</version>
+	<version>0.4.0-SNAPSHOT</version>
 
 	<name>Auto QC</name>
 	<description>ImageJ plugin for automating quality control tasks for microscopes.</description>
@@ -163,7 +163,13 @@
 			<artifactId>ij</artifactId>
 			<version>1.52i</version>
 		</dependency>
-
+		<dependency>
+		<groupId>metroloJ</groupId>
+		<artifactId>MetroloJ</artifactId>
+		<version>1.0</version>
+		<scope>system</scope>
+		<systemPath>/home/erick/Downloads/Fiji.app/metroloj_.jar</systemPath>
+	</dependency>
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>bio-formats_plugins</artifactId>
