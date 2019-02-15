@@ -13,6 +13,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Roi;
+import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.plugin.ChannelSplitter;
 import ij.process.FloatPolygon;
@@ -199,7 +200,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
                 currentFile = readFile(path, selectedDir);
 
-                double[][] finalResult = processing(currentFile);
+                double[][] finalResult = processing(currentFile, path);
 
 
 
@@ -256,7 +257,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
     }
 
-    public double[][] processing(Img image){
+    public double[][] processing(Img image, String path){
         //private void processing(Img<FloatType> image){
 
 
@@ -366,6 +367,33 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
 
         double[][] finalResults  = new double[beads][4];
+
+
+
+
+
+        File theDir = new File(path+"_beads");
+        System.out.println("entering create dir");
+// if the directory does not exist, create it
+        if (!theDir.exists()) {
+            System.out.println("creating directory: " + theDir.getName());
+            boolean result = false;
+
+            try{
+                theDir.mkdir();
+                result = true;
+            }
+            catch(SecurityException se){
+                //handle it
+            }
+            if(result) {
+                System.out.println("DIR created");
+            }
+        }
+
+
+
+
         //ij.ui().showUI();
         // loops over selected pixels and crops out the PSFs
         for (int i = 0; i < goodX.length; i++){
@@ -385,7 +413,8 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
             IPcropped.setCalibration(calibration);
 
-
+            FileSaver fs = new FileSaver(IPcropped);
+            fs.saveAsTiff(path+"_beads"+File.separator+"bead_"+i+".tif");
 
             // crops stack around the specified coordinates
 

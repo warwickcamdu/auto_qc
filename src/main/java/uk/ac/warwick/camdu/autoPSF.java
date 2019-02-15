@@ -17,6 +17,7 @@ import java.io.IOException;
 
 import ij.WindowManager;
 import ij.gui.Roi;
+import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
@@ -207,7 +208,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
                 currentFile = readFile(path, selectedDir);
 
-                double[][] finalResult = processing(currentFile);
+                double[][] finalResult = processing(currentFile,path);
 
                 String resultPath = selectedDir + File.separator + "summary_PSF.csv";
 
@@ -264,7 +265,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     }
 
-    public double[][] processing(Img image){
+    public double[][] processing(Img image, String path){
     //private void processing(Img<FloatType> image){
 
 
@@ -389,6 +390,31 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
         double[][] finalResults  = new double[beads][3];
+
+
+
+        File theDir = new File(path+"_beads");
+        System.out.println("entering create dir");
+// if the directory does not exist, create it
+        if (!theDir.exists()) {
+            System.out.println("creating directory: " + theDir.getName());
+            boolean result = false;
+
+            try{
+                theDir.mkdir();
+                result = true;
+            }
+            catch(SecurityException se){
+                //handle it
+            }
+            if(result) {
+                System.out.println("DIR created");
+            }
+        }
+
+
+
+
         //ij.ui().showUI();
         // loops over selected pixels and crops out the PSFs
         for (int i = 0; i < goodX.length; i++){
@@ -410,7 +436,8 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             IPcropped.setCalibration(calibration);
 
 
-
+            FileSaver fs = new FileSaver(IPcropped);
+            fs.saveAsTiff(path+"_beads"+File.separator+"bead_"+i+".tif");
             // crops stack around the specified coordinates
 
             // calls GetRes to extract the resolution form the PSFs
