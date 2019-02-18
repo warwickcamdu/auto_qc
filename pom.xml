@@ -137,7 +137,7 @@
 		<main-class>uk.ac.warwick.camdu.autoQC</main-class>
 		<license.licenseName>gpl</license.licenseName>
 		<license.copyrightOwners>University of Warwick</license.copyrightOwners>
-		<imagej.app.directory>/home/erick/Downloads/Fiji.app/</imagej.app.directory>
+		<imagej.app.directory>/home/erick/Fiji.app/</imagej.app.directory>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
@@ -184,6 +184,13 @@
 			<artifactId>imagej-ops</artifactId>
 			<version>0.43.2</version>
 		</dependency>
+
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>TrackMate_</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+
 
 	</dependencies>
 
