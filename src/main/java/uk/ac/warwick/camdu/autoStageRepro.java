@@ -69,7 +69,7 @@ import static java.lang.Math.abs;
 /**
  */
 
-@Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoColoc")
+@Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoStageRepro")
 public class autoStageRepro<T extends RealType<T>> extends Component implements Command {
 
     @Parameter
