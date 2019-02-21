@@ -109,7 +109,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
     }
 
     public void createUI(){
-        JTextField extField = new JTextField(".dv",10);
+        JTextField extField = new JTextField(".tif",10);
         JTextField beadField = new JTextField("1",5);
         JTextField sepField = new JTextField("30",5);
 
@@ -267,11 +267,25 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
         //ImageJFunctions.show(image);
         // Crops the image to get middle of the field of view
 
-        FinalInterval interval = FinalInterval.createMinSize(0,0,0,0,image.dimension(0),image.dimension(1),image.dimension(2),image.dimension(3));
-        if (image.dimension(0) > 300 && image.dimension(1) > 300){
-            System.out.println(image.dimension(0));
-            interval = FinalInterval.createMinSize(image.dimension(0)/2-150,image.dimension(1)/2-150,0,0,300,300,image.dimension(2),image.dimension(3));
+
+        long minx, miny, maxx, maxy;
+        minx = 0;
+        miny = 0;
+
+        maxx = 300;
+        maxy = 300;
+
+
+        if (image.dimension(0)>300){
+            minx = image.dimension(0)/2-150;
         }
+        if (image.dimension(1)>300){
+            miny = image.dimension(1)/2-150;
+        }
+
+        FinalInterval interval = FinalInterval.createMinSize(minx,miny,0,0,maxx,maxy,image.dimension(2),image.dimension(3));
+
+
 
 
         RandomAccessibleInterval cropped;

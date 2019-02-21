@@ -13,9 +13,18 @@ Continuing development by Erick Ratamero, experimental input from Claire Mitchel
 https://www.warwick.ac.uk/camdu
 
 
-Based on the .py script auto_PSF.py from Erick Ratamero:
+Based on the .py scripts from Erick Ratamero:
 
-https://github.com/erickmartins/autoQC/blob/master/auto_PSF.py
+https://github.com/erickmartins/autoQC_jython
+
+==========================================================================================
+
+Usage Instructions:
+
+autoPSF: searches the input directory for images with the string "psf" on their names, expects a Z-stack.  
+autoFOV: searches the input directory for images with the string "fov" on their names, expects a single 2d image.  
+autoColoc: searches the input directory for images with the string "coloc" on their names, expects a 4d image (XYCZT).  
+autoStageRepro: searches the input directory for images with the string "stage" on their names, expects a 3d image (timelapse).  
 
 
 
@@ -60,76 +69,8 @@ NEUBIAS and NEUBIAS TS11 organisers for creating the environment
 ==========================================================================================
 
 
-Title: Automatic PSF quality measurement
-
-Input file: a file of the specified file format (file extension) containing the string "psf"
-
-Dimension: at least 300x300
-
-Content: PSFs from flourescent beads
-         The usual PSF measurement criteria apply:
-         Well separated beads, not too dense, subresolution.
-
-Output: summary table with quality measurements per bead
-        Will be written into the base input directory
-
-Input parameters 
-
-- Input directory - GUI interaction that points to the directory where input data is
-
-- File extension: self-explanatory
-
-- Number of beads: how many beads should be analysed
-
-- Correction factors: multiplying factor for the FWHM resolution output from MetroloJ, per dimension
-
-- minSeparation: minimal distance (in pixels) that two PSFs need to be separated by to be considered
-
-Description:
-
-Finds the relevant stack within the specified diretory that contains the bead measurement.
-Opens the stack using bioformats importer.
-Crops the stack to get the center of the field of view.
-Gets the slice that is in focus (max standard deviation).
-Detects the beads via maximum detection.
-Takes the location of the point detection.
-Extracts the intensity of the pixel at that point.
-Selects the specified number of beads with the lowest intensity that are well separated.
-Crops out these selected beads from the stack.
-Applies PSFprofiler of the MetroloJ plugin to get resolution of microscope.
-
-Functions of the plugin:
-
-run:
-Opens dialog for choosing a file.
-Gets based path of file.
-
-readFile:
-Opens file using Bioformats import.
-Calls processing function.
-Specifies result file.
-Calls WriteFile to save result table.
-
-processing:
-Crops the image to get middle of the field of view.
-Finds the in Focus slice via maximum standard deviation.
-Detects maxima in the in Focus slice.
-Gets coordinates of ROIs and gets Pixel Value at this coordinate.
-Sorts the Pixel coordinates by the intensity value.
-Selects beads based on specified criteria.
-Crops out the PSFs
-Calls GetRes function to get Resolution values.
-Multiplies the resolution values with the correction factors.
-
-WriteFile:
-Writes the result files with header
-
-GetRes:
-Calls the PSF Profiler of MetroloJ on cropped PSF
-
 ----------------------------------------------------------------------------------------
 ToDo:
 
 Documentation of the code
 
-Other Jython scripts

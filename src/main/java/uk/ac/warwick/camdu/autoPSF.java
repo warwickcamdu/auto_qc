@@ -43,7 +43,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Objects;
+
+import static java.lang.Math.ceil;
+import static java.lang.Math.round;
 
 
 /**
@@ -57,63 +61,77 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
 
-    String ext = ".dv";
-    int beads = 3;
-    double corr_factor_x = 1.186;
-    double corr_factor_y = 1.186;
-    double corr_factor_z = 1.186;
-    int minSeparation = 15;
+    private String ext = ".dv";
+    private int beads = 3;
+    private double corr_factor_x = 1.186;
+    private double corr_factor_y = 1.186;
+    private double corr_factor_z = 1.186;
+    private double beadSize = 1.0;
+    private double noiseTol = 100;
+    private int minSeparation = 15;
     Calibration calibration;
 
-    String srcDir = "";
+    private String srcDir = "";
 
-    public void setExtension(String extension){
+    private void setExtension(String extension){
         ext = extension;
 
     }
 
-    public void setBeads(int beadnum){
+    private void setBeads(int beadnum){
         beads = beadnum;
 
     }
 
-    public void setCorrX(double corr_x){
+    private void setBeadSize(double bsize){
+        beadSize = bsize;
+
+    }
+
+    private void setCorrX(double corr_x){
         corr_factor_x = corr_x;
 
     }
 
-    public void setCorrY(double corr_y){
+    private void setCorrY(double corr_y){
         corr_factor_y = corr_y;
 
     }
 
-    public void setCorrZ(double corr_z){
+    private void setCorrZ(double corr_z){
         corr_factor_z = corr_z;
 
     }
 
-    public void setMinSep(int minsep){
+    private void setMinSep(int minsep){
         minSeparation = minsep;
 
     }
 
-    public void setDir(String sourceDir){
+    private void setNoiseTol(double ntol){
+        noiseTol = ntol;
+
+    }
+
+    private void setDir(String sourceDir){
         srcDir = sourceDir;
 
     }
 
 
-    public void createUI(){
-        JTextField extField = new JTextField(".dv",10);
+    private void createUI(){
+        JTextField extField = new JTextField(".tif",10);
         JTextField beadField = new JTextField("5",5);
+        JTextField beadSizeField = new JTextField("1",5);
         JTextField corrXField = new JTextField("1.168",5);
         JTextField corrYField = new JTextField("1.168",5);
         JTextField corrZField = new JTextField("1.168",5);
         JTextField sepField = new JTextField("15",5);
+        JTextField noiseTolField = new JTextField("100",5);
 
         JButton browseBtn = new JButton("Browse:");
 
-        browseBtn.addActionListener(e -> browseButtonActionPerformed(e));
+        browseBtn.addActionListener(this::browseButtonActionPerformed);
 
 
 
@@ -129,6 +147,9 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         myPanel.add(new JLabel("Number of beads:"));
         myPanel.add(beadField);
 
+        myPanel.add(new JLabel("Bead size (um):"));
+        myPanel.add(beadSizeField);
+
         myPanel.add(new JLabel("Correction factor (x):"));
         myPanel.add(corrXField);
 
@@ -141,20 +162,26 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         myPanel.add(new JLabel("Minimum bead separation (px):"));
         myPanel.add(sepField);
 
-        myPanel.add(new JLabel("Please select your datset:"));
+        myPanel.add(new JLabel("Noise threshold:"));
+        myPanel.add(noiseTolField);
+
+        myPanel.add(new JLabel("Please select your dataset:"));
         myPanel.add(browseBtn);
 
         myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.Y_AXIS));
 
-        int result = JOptionPane.showConfirmDialog(
+        JOptionPane.showConfirmDialog(
                 null, myPanel, "autoColoc", JOptionPane.OK_CANCEL_OPTION);
 
         setExtension(extField.getText());
         setBeads(Integer.parseInt(beadField.getText()));
         setCorrX(Double.parseDouble(corrXField.getText()));
         setCorrY(Double.parseDouble(corrYField.getText()));
-
+        setCorrZ(Double.parseDouble(corrZField.getText()));
+        setBeadSize(Double.parseDouble(beadSizeField.getText()));
         setMinSep(Integer.parseInt(sepField.getText()));
+        setNoiseTol(Double.parseDouble(noiseTolField.getText()));
+
 
 
 
@@ -192,8 +219,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         System.out.println(srcDir);
 
-        ArrayList<String> folders = new ArrayList<String>();
-        ArrayList<String> filenames = new ArrayList<String>();
+
 
         File selectedDir = new File(srcDir);
 
@@ -206,7 +232,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 System.out.println("Processing file: " + fileEntry.getName());
                 String path = selectedDir + File.separator + fileEntry.getName();
 
-                currentFile = readFile(path, selectedDir);
+                currentFile = readFile(path);
 
                 double[][] finalResult = processing(currentFile,path);
 
@@ -227,7 +253,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     }
 
-    private Img<FloatType> readFile(String arg, File selectDir) {
+    private Img<FloatType> readFile(String arg) {
 
         //  OpenDialog od = new OpenDialog("Open Image File...", arg);
         //  String dir = od.getDirectory();
@@ -239,9 +265,9 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         Img<FloatType> imgFinal = ArrayImgs.floats(dimensions);
 
-        ImagePlus[] imps = new ImagePlus[0];
+        ImagePlus[] imps;
 
-        ImagePlus imp = new ImagePlus();
+        ImagePlus imp;
         try {
 
             imps = BF.openImagePlus(arg);
@@ -265,8 +291,30 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     }
 
-    public double[][] processing(Img image, String path){
+    private double[][] processing(Img image, String path){
     //private void processing(Img<FloatType> image){
+
+
+        File theDir = new File(path+"_beads");
+        System.out.println("entering create dir");
+// if the directory does not exist, create it
+        if (!theDir.exists()) {
+            System.out.println("creating directory: " + theDir.getName());
+            boolean result = false;
+
+            try{
+                theDir.mkdir();
+                result = true;
+            }
+            catch(SecurityException se){
+                //handle it
+            }
+            if(result) {
+                System.out.println("DIR created");
+            }
+        }
+
+
 
 
         IJ.run("Set Measurements...", "min centroid integrated redirect=None decimal=3");
@@ -275,11 +323,22 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         //ImageJFunctions.show(image);
         // Crops the image to get middle of the field of view
 
-        FinalInterval interval = FinalInterval.createMinSize(0,0,0,image.dimension(0),image.dimension(1),image.dimension(2));
-        if (image.dimension(0) > 300 && image.dimension(1) > 300){
-            System.out.println(image.dimension(0));
-            interval = FinalInterval.createMinSize(image.dimension(0)/2-150,image.dimension(1)/2-150,0,300,300,image.dimension(2));
+        long minx, miny, minz, maxx, maxy, maxz;
+        minx = 0;
+        miny = 0;
+        minz = 0;
+        maxx = 300;
+        maxy = 300;
+        maxz = image.dimension(2);
+        if (image.dimension(0)>300){
+            minx = image.dimension(0)/2-150;
         }
+        if (image.dimension(1)>300){
+            miny = image.dimension(1)/2-150;
+        }
+
+        FinalInterval interval = FinalInterval.createMinSize(minx,miny,minz,maxx,maxy,maxz);
+
 
 
         RandomAccessibleInterval cropped;
@@ -306,17 +365,17 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
         // detect beads and measure for intensity and x/y coords
-        IJ.run("Find Maxima...", "noise=20 output=[Point Selection] exclude");
+        IJ.run("Find Maxima...", "noise="+noiseTol+" output=[Point Selection] exclude");
         ImagePlus imp = IJ.getImage();
+        IJ.saveAsTiff(imp,path+"_beads"+File.separator+"allbeads"+".tif");
         // Gets coordinates of ROIs
 
         Roi test = imp.getRoi();
         FloatPolygon floatPolygon = test.getFloatPolygon();
-
         float[][] resultsTable = new float[floatPolygon.npoints][3];
 
         // loops over ROIs and get pixel Vvlue at their coordinate.
-        for (int i=1; i < floatPolygon.npoints; i++){
+        for (int i=0; i < floatPolygon.npoints; i++){
 
             float intx = floatPolygon.xpoints[i];
             float inty = floatPolygon.ypoints[i];
@@ -325,27 +384,23 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             r.setPosition((int) inty,1);
             FloatType pixel = r.get();
 
-            resultsTable[i-1][0] = intx;
-            resultsTable[i-1][1] = inty;
-            resultsTable[i-1][2] = pixel.get();
+            resultsTable[i][0] = intx;
+            resultsTable[i][1] = inty;
+            resultsTable[i][2] = pixel.get();
 
         }
 
 
 
         // Sorts the Pixel coordinates by the intensity value.
-        java.util.Arrays.sort(resultsTable, new java.util.Comparator<float[]>() {
-                    public int compare(float[] a, float[] b) {
-
-                        return Double.compare(a[2], b[2]);
-
-                    }
-                });
+        java.util.Arrays.sort(resultsTable, Comparator.comparingDouble(a -> a[2]));
 
         int countSpots = 0;
-        int firstPosition = 1;
-        double goodX[] = new double[beads];
-        double goodY[] = new double[beads];
+        int firstPosition = 0;
+        double[] goodX = new double[beads];
+        double[] goodY = new double[beads];
+
+      
 
 
         // selects the selected number of pixels based on the specified criteria
@@ -393,37 +448,49 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
 
-        File theDir = new File(path+"_beads");
-        System.out.println("entering create dir");
-// if the directory does not exist, create it
-        if (!theDir.exists()) {
-            System.out.println("creating directory: " + theDir.getName());
-            boolean result = false;
 
-            try{
-                theDir.mkdir();
-                result = true;
-            }
-            catch(SecurityException se){
-                //handle it
-            }
-            if(result) {
-                System.out.println("DIR created");
-            }
+        long cropSize = 20;
+        String unit = calibration.getUnit();
+        if (unit == "micron" || unit == "um"){
+            double pixSize = calibration.pixelHeight;
+            cropSize = round((3 * beadSize) / pixSize);
         }
-
-
-
+        if (unit == "nm"){
+            double pixSize = calibration.pixelHeight;
+            cropSize = round((3 * beadSize) / (pixSize/1000));
+        }
+        if (cropSize < 20){
+            cropSize = 20;
+        }
 
         //ij.ui().showUI();
         // loops over selected pixels and crops out the PSFs
         for (int i = 0; i < goodX.length; i++){
 
-            interval = FinalInterval.createMinSize(0,0,0,20,20,cropped.dimension(2));
 
-            if (goodX[i]>10 && goodY[i]>10){
-                interval = FinalInterval.createMinSize((int)goodX[i]-10,(int)goodY[i]-10,0,20,20,cropped.dimension(2));
+            minx = 0;
+            miny = 0;
+            minz = 0;
+            maxx = cropSize;
+            maxy = cropSize;
+            maxz = cropped.dimension(2);
+            if (goodX[i]>cropSize/2 && goodX[i]<cropped.dimension(0)-cropSize){
+                minx = (long) ceil(goodX[i]-cropSize/2);
             }
+            if (goodY[i]>cropSize/2 && goodY[i]<cropped.dimension(1)-cropSize){
+                miny = (long) ceil(goodY[i]-cropSize/2);
+            }
+
+            if (goodX[i]>=cropped.dimension(0)-cropSize){
+                minx = cropped.dimension(0)-cropSize;
+            }
+
+            if (goodY[i]>=cropped.dimension(1)-cropSize){
+                miny = cropped.dimension(1)-cropSize;
+            }
+            interval = FinalInterval.createMinSize(minx,miny,minz,maxx,maxy,maxz);
+
+            //interval = FinalInterval.createMinSize(0,0,0,cropSize,cropSize,cropped.dimension(2));
 
 
             RandomAccessibleInterval newcropped  = ij.op().transform().crop(cropped,interval, true);
@@ -462,7 +529,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     }
 
 
-    public static boolean WriteFile(String FilePath, double[][] BeatResArray){
+    private static void WriteFile(String FilePath, double[][] BeatResArray){
 
             String COMMA_DELIMITER = ",";
             String NEW_LINE_SEPARATOR = "\n";
@@ -473,15 +540,13 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 fileWriter.append("x_resolution").append(COMMA_DELIMITER).append("y_resolution").append(COMMA_DELIMITER).append("z_resolution");
                 //Add a new line separator after the header
                 fileWriter.append(NEW_LINE_SEPARATOR);
-                int Datalength = BeatResArray.length;
-                for (int x = 0; x <Datalength; x++)
-                {
+                for (double[] doubles : BeatResArray) {
 
-                    fileWriter.append(String.valueOf(BeatResArray[x][0]));
+                    fileWriter.append(String.valueOf(doubles[0]));
                     fileWriter.append(COMMA_DELIMITER);
-                    fileWriter.append(String.valueOf(BeatResArray[x][1]));
+                    fileWriter.append(String.valueOf(doubles[1]));
                     fileWriter.append(COMMA_DELIMITER);
-                    fileWriter.append(String.valueOf(BeatResArray[x][2]));
+                    fileWriter.append(String.valueOf(doubles[2]));
                     fileWriter.append(NEW_LINE_SEPARATOR);
 
                 }
@@ -505,11 +570,11 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
                 }
             }
-            return true;
+
 
     }
 
-    public static double[] GetRes(ImagePlus BeatStack){
+    private static double[] GetRes(ImagePlus BeatStack){
 
         PSFprofiler profiler=new PSFprofiler(BeatStack);
         return profiler.getResolutions();
@@ -523,9 +588,10 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * your integrated development environment (IDE).
      *
      * @param args whatever, it's ignored
-     * @throws Exception
+     *
+     *
      */
-    public static void main(final String... args) throws Exception {
+    public static void main(final String... args) {
         // create the ImageJ application context with all available services
         //final ImageJ ij = new ImageJ();
         //ij.ui().showUI();

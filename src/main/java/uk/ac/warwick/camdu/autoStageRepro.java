@@ -128,7 +128,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
     }
 
     public void createUI(){
-        JTextField extField = new JTextField(".dv",10);
+        JTextField extField = new JTextField(".tif",10);
         JTextField beadField = new JTextField("1",5);
         JTextField sepField = new JTextField("30",5);
 

@@ -96,7 +96,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
     private void createUI(){
-        JTextField extField = new JTextField(".dv",10);
+        JTextField extField = new JTextField(".tif",10);
 
 
         JButton browseBtn = new JButton("Browse:");
