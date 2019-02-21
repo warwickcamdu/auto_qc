@@ -258,8 +258,16 @@ class autoFOV<T extends RealType<T>> extends Component implements Command {
     private double parseResult(String stats){
         double minVal = 1.0;
         String[] lines = stats.split("\n");
+
         int i;
-        for (i=6;i<10;i++){
+        int init_line = 0;
+        for (i=0; i< lines.length; i++){
+            if (lines[i].startsWith("Top-left")){
+                init_line = i;
+                break;
+            }
+        }
+        for (i=init_line;i<init_line+4;i++){
             String[] fields = lines[i].split("\t");
             double currval = Double.parseDouble(fields[2]);
             if (currval < minVal){
