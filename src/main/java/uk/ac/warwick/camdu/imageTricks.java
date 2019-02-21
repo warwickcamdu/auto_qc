@@ -15,16 +15,16 @@ import ij.process.LUT;
 import java.awt.Color;
 import java.awt.Font;
 
-public class imageTricks {
+class imageTricks {
     public static final Color[] COLORS;
     public static final String[] COLOR_NAMES;
-    public static int fraction;
-    public static int barHeightInPixels;
+    private static final int fraction;
+    private static final int barHeightInPixels;
     public static final int BOTTOM_RIGHT = 0;
     public static final int BOTTOM_LEFT = 1;
-    public static int fontSize;
-    public static Calibration globalCal;
-    public static Calibration localCal;
+    private static int fontSize;
+    private static Calibration globalCal;
+    private static Calibration localCal;
 
     static {
         COLORS = new Color[]{Color.red, Color.green, Color.blue, Color.magenta, Color.yellow, Color.cyan};

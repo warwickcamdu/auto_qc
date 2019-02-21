@@ -19,27 +19,27 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class PSFprofiler {
-    public static final double SQRT2LN2 = Math.sqrt(2.0D * Math.log(2.0D));
+class PSFprofiler {
+    private static final double SQRT2LN2 = Math.sqrt(2.0D * Math.log(2.0D));
     public static final int X = 0;
     public static final int Y = 1;
     public static final int Z = 2;
-    ImagePlus ip;
-    int[] center;
-    double[][] xProfile;
-    double[] xParams;
-    double xR2;
-    String xParamString;
-    double[][] yProfile;
-    double[] yParams;
-    double yR2;
-    String yParamString;
-    double[][] zProfile;
-    double[] zParams;
-    double zR2;
-    String zParamString;
-    Calibration cal;
-    double[] resol;
+    private ImagePlus ip;
+    private int[] center;
+    private double[][] xProfile;
+    private final double[] xParams;
+    private double xR2;
+    private String xParamString;
+    private double[][] yProfile;
+    private final double[] yParams;
+    private double yR2;
+    private String yParamString;
+    private double[][] zProfile;
+    private final double[] zParams;
+    private double zR2;
+    private String zParamString;
+    private Calibration cal;
+    private final double[] resol;
 
     public PSFprofiler(ImagePlus ip) {
         this.xProfile = null;
@@ -69,20 +69,20 @@ public class PSFprofiler {
         }
     }
 
-    public PSFprofiler(String path) {
+    private PSFprofiler(String path) {
         this(new ImagePlus(path));
     }
 
     private void getXprofileAndFit() {
         this.xProfile = new double[3][this.ip.getWidth()];
         this.xProfile[1] = this.ip.getProcessor().getLine(0.0D, (double)this.center[1], (double)(this.ip.getWidth() - 1), (double)this.center[1]);
-        this.fitProfile(this.xProfile, this.xParams, 0);
+        this.fitProfile(this.xProfile, 0);
     }
 
     private void getYprofileAndFit() {
         this.yProfile = new double[3][this.ip.getHeight()];
         this.yProfile[1] = this.ip.getProcessor().getLine((double)this.center[0], 0.0D, (double)this.center[0], (double)(this.ip.getHeight() - 1));
-        this.fitProfile(this.yProfile, this.yParams, 1);
+        this.fitProfile(this.yProfile, 1);
     }
 
     private void getZprofileAndFit() {
@@ -93,10 +93,10 @@ public class PSFprofiler {
         this.ip.setCalibration(this.cal);
         this.zProfile = new double[3][this.ip.getNSlices()];
         this.zProfile[1] = crossX.getProcessor().getLine((double)this.center[0], 0.0D, (double)this.center[0], (double)(crossX.getHeight() - 1));
-        this.fitProfile(this.zProfile, this.zParams, 2);
+        this.fitProfile(this.zProfile, 2);
     }
 
-    private void fitProfile(double[][] profile, double[] params, int dimension) {
+    private void fitProfile(double[][] profile, int dimension) {
         double max = profile[1][0];
         double pixelSize = 1.0D;
         int resolIndex = 0;
@@ -113,7 +113,7 @@ public class PSFprofiler {
                 resolIndex = 2;
         }
 
-        params = new double[]{max, max, 0.0D, 2.0D * pixelSize};
+        double[] params = new double[]{max, max, 0.0D, 2.0D * pixelSize};
 
         for(int i = 0; i < profile[0].length; ++i) {
             profile[0][i] = (double)i * pixelSize;
@@ -153,7 +153,8 @@ public class PSFprofiler {
         this.resol[resolIndex] = 2.0D * SQRT2LN2 * params[3];
     }
 
-    public Plot getXplot() {
+    @SuppressWarnings("deprecation")
+    private Plot getXplot() {
         Plot plot = new Plot("Profile plot along the x axis", "x (" + this.cal.getUnit() + ")", "Intensity (AU)", this.xProfile[0], this.xProfile[2]);
         plot.setSize(300, 200);
         plot.setColor(Color.red);
@@ -163,7 +164,8 @@ public class PSFprofiler {
         return plot;
     }
 
-    public Plot getYplot() {
+    @SuppressWarnings("deprecation")
+    private Plot getYplot() {
         Plot plot = new Plot("Profile plot along the y axis", "y (" + this.cal.getUnit() + ")", "Intensity (AU)", this.yProfile[0], this.yProfile[2]);
         plot.setSize(300, 200);
         plot.setColor(Color.red);
@@ -173,7 +175,8 @@ public class PSFprofiler {
         return plot;
     }
 
-    public Plot getZplot() {
+    @SuppressWarnings("deprecation")
+    private Plot getZplot() {
         Plot plot = new Plot("Profile plot along the z axis", "z (" + this.cal.getUnit() + ")", "Intensity (AU)", this.zProfile[0], this.zProfile[2]);
         plot.setSize(300, 200);
         plot.setColor(Color.red);
@@ -187,7 +190,7 @@ public class PSFprofiler {
         return this.resol;
     }
 
-    public String getUnit() {
+    private String getUnit() {
         return this.cal.getUnit();
     }
 
@@ -234,9 +237,8 @@ public class PSFprofiler {
 
     }
 
-    public String[][] getSummary(microscope microscope) {
-        String[][] output = new String[][]{{"", "x", "y", "z"}, {"FWHM", dataTricks.round(this.getResolutions()[0], 3) + " " + this.getUnit(), dataTricks.round(this.getResolutions()[1], 3) + " " + this.getUnit(), dataTricks.round(this.getResolutions()[2], 3) + " " + this.getUnit()}, {"Theoretical resolution", dataTricks.round(microscope.resolution[0], 3) + " µm", dataTricks.round(microscope.resolution[1], 3) + " µm", dataTricks.round(microscope.resolution[2], 3) + " µm"}, {"Fit goodness", String.valueOf(dataTricks.round(this.xR2, 3)), String.valueOf(dataTricks.round(this.yR2, 3)), String.valueOf(dataTricks.round(this.zR2, 3))}};
-        return output;
+    private String[][] getSummary(microscope microscope) {
+        return new String[][]{{"", "x", "y", "z"}, {"FWHM", dataTricks.round(this.getResolutions()[0], 3) + " " + this.getUnit(), dataTricks.round(this.getResolutions()[1], 3) + " " + this.getUnit(), dataTricks.round(this.getResolutions()[2], 3) + " " + this.getUnit()}, {"Theoretical resolution", dataTricks.round(microscope.resolution[0], 3) + " µm", dataTricks.round(microscope.resolution[1], 3) + " µm", dataTricks.round(microscope.resolution[2], 3) + " µm"}, {"Fit goodness", String.valueOf(dataTricks.round(this.xR2, 3)), String.valueOf(dataTricks.round(this.yR2, 3)), String.valueOf(dataTricks.round(this.zR2, 3))}};
     }
 
     public void saveSummary(String path, String filename, microscope microscope) {
@@ -249,8 +251,8 @@ public class PSFprofiler {
             for(int j = 0; j < array[0].length; ++j) {
                 String line = "";
 
-                for(int i = 0; i < array.length; ++i) {
-                    line = line + array[i][j].replaceAll("\n", " ") + "\t";
+                for (String[] strings : array) {
+                    line = line + strings[j].replaceAll("\n", " ") + "\t";
                 }
 
                 out.write(line);

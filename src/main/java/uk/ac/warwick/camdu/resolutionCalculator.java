@@ -6,10 +6,10 @@ package uk.ac.warwick.camdu;
 //
 
 
-public class resolutionCalculator {
+class resolutionCalculator {
     public final int WIDEFIELD = 0;
     public final int CONFOCAL = 1;
-    double[] resolutions = new double[]{0.0D, 0.0D, 0.0D};
+    private final double[] resolutions = new double[]{0.0D, 0.0D, 0.0D};
 
     public resolutionCalculator(int microscope, double wavelength, double NA) {
         wavelength /= 1000.0D;

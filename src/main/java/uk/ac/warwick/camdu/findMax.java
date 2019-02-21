@@ -7,7 +7,7 @@ package uk.ac.warwick.camdu;
 
 import ij.ImagePlus;
 
-public class findMax {
+class findMax {
     public findMax() {
     }
 
@@ -24,7 +24,7 @@ public class findMax {
         return coord;
     }
 
-    public int[] get2DCenter(ImagePlus ip) {
+    private int[] get2DCenter(ImagePlus ip) {
         int max = 0;
         int[] coord = new int[2];
 
@@ -72,7 +72,7 @@ public class findMax {
         return coord;
     }
 
-    public int getZmax(ImagePlus ip, int xPos, int yPos) {
+    private int getZmax(ImagePlus ip, int xPos, int yPos) {
         int max = 0;
         int coord = 1;
 

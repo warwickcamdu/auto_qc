@@ -23,8 +23,8 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class fileTricks {
-    public fileTricks() {
+class fileTricks {
+    private fileTricks() {
     }
 
     public static void save(String content, String path) {
@@ -54,8 +54,7 @@ public class fileTricks {
             DataOutputStream out = new DataOutputStream(new BufferedOutputStream(zos));
             RoiEncoder re = new RoiEncoder(out);
 
-            for(int i = 0; i < rois.length; ++i) {
-                Roi roi = rois[i];
+            for (Roi roi : rois) {
                 if (roi != null) {
                     String label = roi.getName();
                     if (!label.endsWith(".roi")) {
@@ -82,6 +81,7 @@ public class fileTricks {
             BufferedReader file = new BufferedReader(new FileReader(path));
 
             for(String line = file.readLine(); line != null; line = file.readLine()) {
+                //noinspection unchecked
                 out.add(line.split("\t"));
             }
 
@@ -90,6 +90,7 @@ public class fileTricks {
             Logger.getLogger(fileTricks.class.getName()).log(Level.SEVERE, (String)null, var4);
         }
 
+        //noinspection unchecked
         return out;
     }
 

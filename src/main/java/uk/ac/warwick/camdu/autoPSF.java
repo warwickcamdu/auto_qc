@@ -10,11 +10,6 @@ package uk.ac.warwick.camdu;
 
 import ij.IJ;
 import ij.ImagePlus;
-
-import java.awt.event.ActionEvent;
-import java.io.FileWriter;
-import java.io.IOException;
-
 import ij.WindowManager;
 import ij.gui.Roi;
 import ij.io.FileSaver;
@@ -23,15 +18,16 @@ import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import loci.formats.FormatException;
 import loci.plugins.BF;
-
 import net.imagej.ImageJ;
 import net.imagej.ops.Ops;
 import net.imagej.ops.special.computer.Computers;
 import net.imagej.ops.special.computer.UnaryComputerOp;
-import net.imglib2.*;
+import net.imglib2.FinalDimensions;
+import net.imglib2.FinalInterval;
+import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
-
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -42,7 +38,8 @@ import org.scijava.plugin.Plugin;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -53,8 +50,9 @@ import static java.lang.Math.round;
 /**
  */
 
+@SuppressWarnings("unchecked")
 @Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoPSF")
-public class autoPSF<T extends RealType<T>> extends Component implements Command {
+class autoPSF<T extends RealType<T>> extends Component implements Command {
 
     @Parameter
     private ImageJ ij;
@@ -69,7 +67,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     private double beadSize = 1.0;
     private double noiseTol = 100;
     private int minSeparation = 15;
-    Calibration calibration;
+    private Calibration calibration;
 
     private String srcDir = "";
 
@@ -131,7 +129,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         JButton browseBtn = new JButton("Browse:");
 
-        browseBtn.addActionListener(this::browseButtonActionPerformed);
+        browseBtn.addActionListener(e -> browseButtonActionPerformed());
 
 
 
@@ -187,7 +185,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     }
 
-    private void browseButtonActionPerformed(ActionEvent e) {
+    private void browseButtonActionPerformed() {
 
         JFileChooser chooser = new JFileChooser();
         chooser.setCurrentDirectory(new java.io.File("."));
@@ -367,7 +365,6 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         // detect beads and measure for intensity and x/y coords
         IJ.run("Find Maxima...", "noise="+noiseTol+" output=[Point Selection] exclude");
         ImagePlus imp = IJ.getImage();
-        IJ.saveAsTiff(imp,path+"_beads"+File.separator+"allbeads"+".tif");
         // Gets coordinates of ROIs
 
         Roi test = imp.getRoi();
@@ -400,7 +397,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         double[] goodX = new double[beads];
         double[] goodY = new double[beads];
 
-      
+
 
 
         // selects the selected number of pixels based on the specified criteria
@@ -432,6 +429,11 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             }
 
             if (valid){
+                Roi beadROI  = new Roi(resultsTable[firstPosition][0]-15,resultsTable[firstPosition][1]-15,30,30);
+                ImageProcessor ip = imp.getProcessor();
+                //ip.setRoi(beadROI);
+                ip.setValue(10000);
+                ip.draw(beadROI);
                 goodX[countSpots] = resultsTable[firstPosition][0];
                 goodY[countSpots] = resultsTable[firstPosition][1];
                 countSpots++;
@@ -443,7 +445,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         }
 
 
-
+        IJ.saveAsTiff(imp,path+"_beads"+File.separator+"allbeads"+".tif");
         double[][] finalResults  = new double[beads][3];
 
 
@@ -451,11 +453,11 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         long cropSize = 20;
         String unit = calibration.getUnit();
-        if (unit == "micron" || unit == "um"){
+        if (unit.equals("micron") || unit.equals("um")){
             double pixSize = calibration.pixelHeight;
             cropSize = round((3 * beadSize) / pixSize);
         }
-        if (unit == "nm"){
+        if (unit.equals("nm")){
             double pixSize = calibration.pixelHeight;
             cropSize = round((3 * beadSize) / (pixSize/1000));
         }

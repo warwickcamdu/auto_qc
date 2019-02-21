@@ -8,7 +8,7 @@ package uk.ac.warwick.camdu;
 
 import ij.measure.Calibration;
 
-public class dataTricks {
+class dataTricks {
     public static final int MIN = 0;
     public static final int MAX = 1;
 

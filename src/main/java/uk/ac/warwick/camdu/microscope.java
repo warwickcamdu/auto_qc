@@ -18,31 +18,27 @@ public class microscope {
     public double wavelength = 0.0D;
     public double NA = 0.0D;
     public double pinhole = 0.0D;
-    public Calibration cal = null;
-    public double[] resolution;
-    public String reportHeader = "";
-    public String date = "";
-    public String sampleInfos = "";
-    public String comments = "";
+    public final double[] resolution;
 
     public microscope(Calibration cal, int microscope, double wavelength, double NA, double pinhole, String sampleInfos, String comments) {
-        this.cal = cal;
+        Calibration cal1 = cal;
         this.microscope = microscope;
         this.wavelength = wavelength;
         this.NA = NA;
         this.pinhole = pinhole;
-        this.sampleInfos = sampleInfos;
-        this.comments = comments;
+        String sampleInfos1 = sampleInfos;
+        String comments1 = comments;
         this.resolution = (new resolutionCalculator(microscope, wavelength, NA)).getResolutions();
-        this.reportHeader = "Microscope: " + MICRO[microscope] + "\nWavelength: " + wavelength + " nm\nNA: " + NA + "\nSampling rate: " + this.round(cal.pixelWidth, 3) + "x" + this.round(cal.pixelHeight, 3) + "x" + this.round(cal.pixelDepth, 3) + " " + cal.getUnit();
+        String reportHeader = "Microscope: " + MICRO[microscope] + "\nWavelength: " + wavelength + " nm\nNA: " + NA + "\nSampling rate: " + this.round(cal.pixelWidth, 3) + "x" + this.round(cal.pixelHeight, 3) + "x" + this.round(cal.pixelDepth, 3) + " " + cal.getUnit();
         if (microscope == 1) {
-            this.reportHeader = this.reportHeader + "\nPinhole: " + pinhole + " Airy Units";
+            reportHeader = reportHeader + "\nPinhole: " + pinhole + " Airy Units";
         }
 
         DateFormat df = DateFormat.getDateTimeInstance(1, 3);
-        this.date = df.format(Calendar.getInstance().getTime()).toString();
+        String date = df.format(Calendar.getInstance().getTime()).toString();
     }
 
+    @SuppressWarnings("SameParameterValue")
     private double round(double nb2round, int nbOfDigits) {
         return (double)Math.round(nb2round * Math.pow(10.0D, (double)nbOfDigits)) / Math.pow(10.0D, (double)nbOfDigits);
     }

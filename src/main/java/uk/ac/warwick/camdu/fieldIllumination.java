@@ -21,26 +21,27 @@ import java.awt.Font;
 import java.util.Vector;
 
 
-public class fieldIllumination {
-    public ImagePlus ip = null;
-    public Calibration cal = null;
-    public int w = 0;
-    public int h = 0;
-    public double[][] diag_TL_BR = null;
-    public double[][] diag_TR_BL = null;
-    public double[][] horiz = null;
-    public double[][] vert = null;
-    public double xCent = 0.0D;
-    public double yCent = 0.0D;
-    public double xMax = 0.0D;
-    public double yMax = 0.0D;
-    public double xCent100 = 0.0D;
-    public double yCent100 = 0.0D;
-    public double distInt = 0.0D;
-    public double distMax = 0.0D;
-    public double dist100 = 0.0D;
-    public Vector<fieldIlluminationArray> remarkInt = new Vector();
-    public static final String[] lineHead = new String[]{"Top-left corner", "Top-right corner", "Bottom-left corner", "Bottom-right corner", "Upper bound, middle pixel", "Lower bound, middle pixel", "Left bound, middle pixel", "Right bound, middle pixel"};
+class fieldIllumination {
+    private ImagePlus ip = null;
+    private Calibration cal = null;
+    private int w = 0;
+    private int h = 0;
+    private double[][] diag_TL_BR = null;
+    private double[][] diag_TR_BL = null;
+    private double[][] horiz = null;
+    private double[][] vert = null;
+    private double xCent = 0.0D;
+    private double yCent = 0.0D;
+    private double xMax = 0.0D;
+    private double yMax = 0.0D;
+    private double xCent100 = 0.0D;
+    private double yCent100 = 0.0D;
+    private double distInt = 0.0D;
+    private double distMax = 0.0D;
+    private double dist100 = 0.0D;
+    @SuppressWarnings("unchecked")
+    private final Vector<fieldIlluminationArray> remarkInt = new Vector();
+    private static final String[] lineHead = new String[]{"Top-left corner", "Top-right corner", "Bottom-left corner", "Bottom-right corner", "Upper bound, middle pixel", "Lower bound, middle pixel", "Left bound, middle pixel", "Right bound, middle pixel"};
 
     public fieldIllumination(ImagePlus im) {
         this.ip = im;
@@ -75,7 +76,7 @@ public class fieldIllumination {
         }
     }
 
-    public ImagePlus getPattern(int stepWidth, int barWidth) {
+    private ImagePlus getPattern(int stepWidth, int barWidth) {
         ImageProcessor iproc = NewImage.createImage("", this.w, this.h, 1, 8, 1).getProcessor();
         double max = this.ip.getStatistics(16).max;
 
@@ -133,7 +134,8 @@ public class fieldIllumination {
         return new ImagePlus("Pattern from " + this.ip.getTitle(), iproc);
     }
 
-    public ImagePlus getProfilesImage() {
+    @SuppressWarnings("deprecation")
+    private ImagePlus getProfilesImage() {
         double min = Math.min(Math.min(Math.min(dataTricks.min(this.diag_TL_BR[1]), dataTricks.min(this.diag_TR_BL[1])), dataTricks.min(this.horiz[1])), dataTricks.min(this.vert[1]));
         double max = Math.max(Math.max(Math.max(dataTricks.max(this.diag_TL_BR[1]), dataTricks.max(this.diag_TR_BL[1])), dataTricks.max(this.horiz[1])), dataTricks.max(this.vert[1]));
         Plot plot = new Plot("Field illumination profiles", "Distance to image center", "Intensity", this.diag_TL_BR[0], this.diag_TL_BR[1]);
@@ -157,7 +159,7 @@ public class fieldIllumination {
         return plot.getImagePlus();
     }
 
-    public String getStringProfiles() {
+    private String getStringProfiles() {
         String out = "distance (µm)\tTop-left/bottom-right\tdistance (µm)\tTop-right/bottom-left\tdistance (µm)\tHorizontale\tdistance (µm)\tnVerticale\n";
 
         for(int i = 0; i < this.diag_TL_BR[0].length; ++i) {

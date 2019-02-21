@@ -16,28 +16,28 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class coAlignement {
+class coAlignement {
     public static final int X = 0;
     public static final int Y = 1;
     public static final int Z = 2;
-    public ImagePlus red = null;
-    public ImagePlus green = null;
-    public ImagePlus blue = null;
-    public microscope[] micro = null;
-    public double[] redCentre = null;
-    public double[] greenCentre = null;
-    public double[] blueCentre = null;
-    public double RGDistUnCal;
-    public double RBDistUnCal;
-    public double GBDistUnCal;
+    private ImagePlus red = null;
+    private ImagePlus green = null;
+    private ImagePlus blue = null;
+    private microscope[] micro = null;
+    private double[] redCentre = null;
+    private double[] greenCentre = null;
+    private double[] blueCentre = null;
+    private double RGDistUnCal;
+    private double RBDistUnCal;
+    private double GBDistUnCal;
     public double RGDistCal;
     public double RBDistCal;
     public double GBDistCal;
-    public double RGRefDist;
-    public double RBRefDist;
-    public double GBRefDist;
-    public Calibration cal = new Calibration();
-    public String microSection = "";
+    private double RGRefDist;
+    private double RBRefDist;
+    private double GBRefDist;
+    private Calibration cal = new Calibration();
+    private String microSection = "";
 
     public coAlignement(ImagePlus[] ip, microscope[] conditions) {
         if (ip.length < 2) {
@@ -96,11 +96,11 @@ public class coAlignement {
 
     }
 
-    public double dist(double[] centre1, double[] centre2, double calX, double calY, double calZ) {
+    private double dist(double[] centre1, double[] centre2, double calX, double calY, double calZ) {
         return centre1.length == 2 ? Math.sqrt((centre2[0] - centre1[0]) * (centre2[0] - centre1[0]) * calX * calX + (centre2[1] - centre1[1]) * (centre2[1] - centre1[1]) * calY * calY) : Math.sqrt((centre2[0] - centre1[0]) * (centre2[0] - centre1[0]) * calX * calX + (centre2[1] - centre1[1]) * (centre2[1] - centre1[1]) * calY * calY + (centre2[2] - centre1[2]) * (centre2[2] - centre1[2]) * calZ * calZ);
     }
 
-    public String[][] getPixShiftArray() {
+    private String[][] getPixShiftArray() {
         String[][] output;
         if (this.blue == null) {
             output = new String[][]{{"Shift\n(pix.)", "Red", "Green"}, {"Red (Ref.)", "0\n0\n0", this.round(this.greenCentre[0] - this.redCentre[0], 3) + "\n" + this.round(this.greenCentre[1] - this.redCentre[1], 3) + "\n" + this.round(this.greenCentre[2] - this.redCentre[2], 3)}, {"Green (Ref.)", this.round(this.redCentre[0] - this.greenCentre[0], 3) + "\n" + this.round(this.redCentre[1] - this.greenCentre[1], 3) + "\n" + this.round(this.redCentre[2] - this.greenCentre[2], 3), "0\n0\n0"}, {"Resolutions\n(pix.)", this.round(this.micro[0].resolution[0] / this.cal.pixelWidth, 3) + "\n" + this.round(this.micro[0].resolution[1] / this.cal.pixelHeight, 3) + "\n" + this.round(this.micro[0].resolution[2] / this.cal.pixelDepth, 3), this.round(this.micro[1].resolution[0] / this.cal.pixelWidth, 3) + "\n" + this.round(this.micro[1].resolution[1] / this.cal.pixelHeight, 3) + "\n" + this.round(this.micro[1].resolution[2] / this.cal.pixelDepth, 3)}, {"Centres' coord.", this.round(this.redCentre[0], 1) + "\n" + this.round(this.redCentre[1], 1) + "\n" + this.round(this.redCentre[2], 1), this.round(this.greenCentre[0], 1) + "\n" + this.round(this.greenCentre[1], 1) + "\n" + this.round(this.greenCentre[2], 1)}, {"Titles", this.red.getTitle(), this.green.getTitle()}};
@@ -111,7 +111,7 @@ public class coAlignement {
         }
     }
 
-    public String[][] getUnCalDistArray() {
+    private String[][] getUnCalDistArray() {
         String[][] output;
         if (this.blue == null) {
             output = new String[][]{{"Dist.\n(pix.)", "Red", "Green"}, {"Red", "-", "" + this.round(this.RGDistUnCal, 3)}, {"Green", "" + this.round(this.RGDistUnCal, 3), "-"}, {"Resolutions\n(pix.)", this.round(this.micro[0].resolution[0] / this.cal.pixelWidth, 3) + "\n" + this.round(this.micro[0].resolution[1] / this.cal.pixelHeight, 3) + "\n" + this.round(this.micro[0].resolution[2] / this.cal.pixelDepth, 3), this.round(this.micro[1].resolution[0] / this.cal.pixelWidth, 3) + "\n" + this.round(this.micro[1].resolution[1] / this.cal.pixelHeight, 3) + "\n" + this.round(this.micro[1].resolution[2] / this.cal.pixelDepth, 3)}, {"Centres' coord.", this.round(this.redCentre[0], 1) + "\n" + this.round(this.redCentre[1], 1) + "\n" + this.round(this.redCentre[2], 1), this.round(this.greenCentre[0], 1) + "\n" + this.round(this.greenCentre[1], 1) + "\n" + this.round(this.greenCentre[2], 1)}, {"Titles", this.red.getTitle(), this.green.getTitle()}};
@@ -122,7 +122,7 @@ public class coAlignement {
         }
     }
 
-    public String[][] getCalDistArray() {
+    private String[][] getCalDistArray() {
         String[][] output;
         if (this.blue == null) {
             output = new String[][]{{"Dist.\n(Ref. dist.)\n" + this.cal.getUnit(), "Red", "Green"}, {"Red", "-", this.round(this.RGDistCal, 3) + "\n(" + this.round(this.RGRefDist, 3) + ")"}, {"Green", this.round(this.RGDistCal, 3) + "\n(" + this.round(this.RGRefDist, 3) + ")", "-"}, {"Resolutions\n(" + this.cal.getUnit() + ")", this.round(this.micro[0].resolution[0], 3) + "\n" + this.round(this.micro[0].resolution[1], 3) + "\n" + this.round(this.micro[0].resolution[2], 3), this.round(this.micro[1].resolution[0], 3) + "\n" + this.round(this.micro[1].resolution[1], 3) + "\n" + this.round(this.micro[1].resolution[2], 3)}, {"Centres' coord.", this.round(this.redCentre[0], 1) + "\n" + this.round(this.redCentre[1], 1) + "\n" + this.round(this.redCentre[2], 1), this.round(this.greenCentre[0], 1) + "\n" + this.round(this.greenCentre[1], 1) + "\n" + this.round(this.greenCentre[2], 1)}, {"Titles", this.red.getTitle(), this.green.getTitle()}};
@@ -161,8 +161,8 @@ public class coAlignement {
             for(int j = 0; j < array[0].length; ++j) {
                 String line = "";
 
-                for(int i = 0; i < array.length; ++i) {
-                    line = line + array[i][j].replaceAll("\n", " ") + "\t";
+                for (String[] strings : array) {
+                    line = line + strings[j].replaceAll("\n", " ") + "\t";
                 }
 
                 out.write(line);

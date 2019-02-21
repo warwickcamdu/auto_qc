@@ -13,7 +13,7 @@ import ij.process.EllipseFitter;
 import ij.process.ImageConverter;
 import ij.process.ImageStatistics;
 
-public class findCentre {
+class findCentre {
     public static final int XY = 0;
     public static final int XZ = 1;
     public static final int YZ = 2;
@@ -33,7 +33,7 @@ public class findCentre {
         return coord;
     }
 
-    public double[] get2DCenter(ImagePlus ip, int profileType) {
+    private double[] get2DCenter(ImagePlus ip, int profileType) {
         double[] coord = new double[2];
         ImagePlus proj = null;
         switch(profileType) {

@@ -9,8 +9,10 @@ package uk.ac.warwick.camdu;
  */
 
 
+import fiji.plugin.trackmate.*;
 import fiji.plugin.trackmate.detection.LogDetectorFactory;
-import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.tracking.SpotTrackerFactory;
+import fiji.plugin.trackmate.tracking.sparselap.SimpleSparseLAPTrackerFactory;
 import fiji.plugin.trackmate.util.LogRecorder;
 import ij.IJ;
 import ij.ImagePlus;
@@ -18,16 +20,11 @@ import ij.WindowManager;
 import ij.gui.Roi;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
-import ij.plugin.ChannelSplitter;
 import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import loci.formats.FormatException;
 import loci.plugins.BF;
 import net.imagej.ImageJ;
-import net.imagej.ops.Ops;
-import net.imagej.ops.special.computer.Computers;
-import net.imagej.ops.special.computer.UnaryComputerOp;
-import net.imglib2.FinalDimensions;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
@@ -42,78 +39,81 @@ import org.scijava.plugin.Plugin;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-import fiji.plugin.trackmate.*;
-import fiji.plugin.trackmate.providers.DetectorProvider;
-import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
-import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
-import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
-import fiji.plugin.trackmate.providers.TrackerProvider;
-import fiji.plugin.trackmate.tracking.SpotTrackerFactory;
-import fiji.plugin.trackmate.tracking.sparselap.SimpleSparseLAPTrackerFactory;
-import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_SPLITTING;
+import static fiji.plugin.trackmate.detection.DetectorKeys.*;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_MERGING;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_SUBPIXEL_LOCALIZATION;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_MEDIAN_FILTERING;
-import static java.lang.Math.abs;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_SPLITTING;
+import static java.lang.Math.*;
 
 
 /**
  */
 
+@SuppressWarnings({"unchecked"})
 @Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoStageRepro")
-public class autoStageRepro<T extends RealType<T>> extends Component implements Command {
+class autoStageRepro<T extends RealType<T>> extends Component implements Command {
 
     @Parameter
     private ImageJ ij;
 
 
 
-    String ext = ".dv";
-    int beads = 3;
-    int minSeparation = 15;
-    Calibration calibration;
-    static String COMMA_DELIMITER = ",";
-    static String NEW_LINE_SEPARATOR = "\n";
+    private String ext = ".dv";
+    private int beads = 3;
+    private int minSeparation = 15;
+    private double beadSize = 1.0;
+    private double noiseTol = 100;
+    private Calibration calibration;
+    private static final String COMMA_DELIMITER = ",";
+    private static final String NEW_LINE_SEPARATOR = "\n";
 
-    String srcDir = "";
+    private String srcDir = "";
 
-    public void setExtension(String extension){
+    private void setExtension(String extension){
         ext = extension;
 
     }
 
-    public void setBeads(int beadnum){
+    private void setBeads(int beadnum){
         beads = beadnum;
 
     }
 
-    public void setMinSep(int minsep){
+    private void setBeadSize(double bsize){
+        beadSize = bsize;
+
+    }
+
+    private void setMinSep(int minsep){
         minSeparation = minsep;
 
     }
 
-    public void setDir(String sourceDir){
+    private void setNoiseTol(double ntol){
+        noiseTol = ntol;
+
+    }
+
+    private void setDir(String sourceDir){
         srcDir = sourceDir;
 
     }
 
 
 
-    public FileWriter printOutputHeader(String FilePath){
+    private FileWriter printOutputHeader(String FilePath){
         FileWriter fileWriter = null;
         try {
             fileWriter = new FileWriter(FilePath);
             //Write the CSV file header
-            fileWriter.append("file_id"+COMMA_DELIMITER+"bead_id"+COMMA_DELIMITER+"max_x_displacement"+COMMA_DELIMITER+"max_y_displacement");
+            fileWriter.append("file_id").append(COMMA_DELIMITER).append("bead_id").append(COMMA_DELIMITER).append("max_x_displacement").append(COMMA_DELIMITER).append("max_y_displacement");
             //Add a new line separator after the header
             fileWriter.append(NEW_LINE_SEPARATOR);
 
@@ -127,14 +127,16 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         return fileWriter;
     }
 
-    public void createUI(){
+    private void createUI(){
         JTextField extField = new JTextField(".tif",10);
         JTextField beadField = new JTextField("1",5);
+        JTextField beadSizeField = new JTextField("1",5);
         JTextField sepField = new JTextField("30",5);
+        JTextField noiseTolField = new JTextField("100",5);
 
         JButton browseBtn = new JButton("Browse:");
 
-        browseBtn.addActionListener(e -> browseButtonActionPerformed(e));
+        browseBtn.addActionListener(e -> browseButtonActionPerformed());
 
 
 
@@ -150,6 +152,9 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         myPanel.add(new JLabel("Number of beads:"));
         myPanel.add(beadField);
 
+        myPanel.add(new JLabel("Bead size (um):"));
+        myPanel.add(beadSizeField);
+
         myPanel.add(new JLabel("Minimum bead separation (px):"));
         myPanel.add(sepField);
 
@@ -158,18 +163,20 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
         myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.Y_AXIS));
 
-        int result = JOptionPane.showConfirmDialog(
+        JOptionPane.showConfirmDialog(
                 null, myPanel, "autoColoc", JOptionPane.OK_CANCEL_OPTION);
 
         setExtension(extField.getText());
         setBeads(Integer.parseInt(beadField.getText()));
+        setBeadSize(Double.parseDouble(beadSizeField.getText()));
         setMinSep(Integer.parseInt(sepField.getText()));
+        setNoiseTol(Double.parseDouble(noiseTolField.getText()));
 
 
 
     }
 
-    private void browseButtonActionPerformed(ActionEvent e) {
+    private void browseButtonActionPerformed() {
 
         JFileChooser chooser = new JFileChooser();
         chooser.setCurrentDirectory(new java.io.File("."));
@@ -201,8 +208,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
         System.out.println(srcDir);
 
-        ArrayList<String> folders = new ArrayList<String>();
-        ArrayList<String> filenames = new ArrayList<String>();
+
 
         File selectedDir = new File(srcDir);
 
@@ -217,13 +223,13 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
                 System.out.println("Processing file: " + fileEntry.getName());
                 String path = selectedDir + File.separator + fileEntry.getName();
 
-                currentFile = readFile(path, selectedDir);
+                currentFile = readFile(path);
 
                 double[][] finalResult = processing(currentFile, path);
 
 
 
-                WriteFile(fw, resultPath,fileEntry.getName(),finalResult);
+                WriteFile(fw, fileEntry.getName(),finalResult);
 
             }
 
@@ -238,7 +244,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
     }
 
-    private Img<FloatType> readFile(String arg, File selectDir) {
+    private Img<FloatType> readFile(String arg) {
 
         //  OpenDialog od = new OpenDialog("Open Image File...", arg);
         //  String dir = od.getDirectory();
@@ -250,9 +256,9 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
         Img<FloatType> imgFinal = ArrayImgs.floats(dimensions);
 
-        ImagePlus[] imps = new ImagePlus[0];
+        ImagePlus[] imps;
 
-        ImagePlus imp = new ImagePlus();
+        ImagePlus imp;
         try {
 
             imps = BF.openImagePlus(arg);
@@ -288,11 +294,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         imp.setOpenAsHyperStack( true );
         imp.show();
 
-        final DetectorProvider detectorProvider = new DetectorProvider();
-        final TrackerProvider trackerProvider = new TrackerProvider();
-        final SpotAnalyzerProvider spotAnalyzerProvider = new SpotAnalyzerProvider();
-        final EdgeAnalyzerProvider edgeAnalyzerProvider = new EdgeAnalyzerProvider();
-        final TrackAnalyzerProvider trackAnalyzerProvider = new TrackAnalyzerProvider();
+
         final Model model = new Model();
 
         final SpotTrackerFactory tf = new SimpleSparseLAPTrackerFactory();
@@ -369,8 +371,28 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         return max;
     }
 
-    public double[][] processing(Img image, String path){
+    private double[][] processing(Img image, String path){
         //private void processing(Img<FloatType> image){
+
+
+        File theDir = new File(path+"_beads");
+        System.out.println("entering create dir");
+// if the directory does not exist, create it
+        if (!theDir.exists()) {
+            System.out.println("creating directory: " + theDir.getName());
+            boolean result = false;
+
+            try{
+                theDir.mkdir();
+                result = true;
+            }
+            catch(SecurityException se){
+                //handle it
+            }
+            if(result) {
+                System.out.println("DIR created");
+            }
+        }
 
 
         IJ.run("Set Measurements...", "min centroid integrated redirect=None decimal=3");
@@ -396,7 +418,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         ImageJFunctions.show(finalcrop);
 
         // detect beads and measure for intensity and x/y coords
-        IJ.run("Find Maxima...", "noise=1000 output=[Point Selection] exclude");
+        IJ.run("Find Maxima...", "noise="+noiseTol+" output=[Point Selection] exclude");
         ImagePlus imp = IJ.getImage();
         IJ.saveAsTiff(imp,path+"_beads"+File.separator+"allbeads"+".tif");
         // Gets coordinates of ROIs
@@ -407,37 +429,30 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         float[][] resultsTable = new float[floatPolygon.npoints][3];
 
         // loops over ROIs and get pixel Vvlue at their coordinate.
-        for (int i=1; i < floatPolygon.npoints; i++){
+        for (int i=0; i < floatPolygon.npoints; i++){
 
             float intx = floatPolygon.xpoints[i];
             float inty = floatPolygon.ypoints[i];
-
-            final RandomAccess<FloatType> r = cropped.randomAccess();
+            final RandomAccess<FloatType> r = finalcrop.randomAccess();
             r.setPosition((int) intx,0);
             r.setPosition((int) inty,1);
             FloatType pixel = r.get();
 
-            resultsTable[i-1][0] = intx;
-            resultsTable[i-1][1] = inty;
-            resultsTable[i-1][2] = pixel.get();
+            resultsTable[i][0] = intx;
+            resultsTable[i][1] = inty;
+            resultsTable[i][2] = pixel.get();
 
         }
 
 
 
         // Sorts the Pixel coordinates by the intensity value.
-        java.util.Arrays.sort(resultsTable, new java.util.Comparator<float[]>() {
-            public int compare(float[] a, float[] b) {
-
-                return Double.compare(a[2], b[2]);
-
-            }
-        });
+        java.util.Arrays.sort(resultsTable, Comparator.comparingDouble(a -> a[2]));
 
         int countSpots = 0;
-        int firstPosition = 1;
-        double goodX[] = new double[beads];
-        double goodY[] = new double[beads];
+        int firstPosition = 0;
+        double[] goodX = new double[beads];
+        double[] goodY = new double[beads];
 
 
         // selects the selected number of pixels based on the specified criteria
@@ -492,27 +507,19 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
 
 
-
-
-        File theDir = new File(path+"_beads");
-        System.out.println("entering create dir");
-// if the directory does not exist, create it
-        if (!theDir.exists()) {
-            System.out.println("creating directory: " + theDir.getName());
-            boolean result = false;
-
-            try{
-                theDir.mkdir();
-                result = true;
-            }
-            catch(SecurityException se){
-                //handle it
-            }
-            if(result) {
-                System.out.println("DIR created");
-            }
+        long cropSize = 30;
+        String unit = calibration.getUnit();
+        if (unit.equals("micron") || unit.equals("um")){
+            double pixSize = calibration.pixelHeight;
+            cropSize = round((3 * beadSize) / pixSize);
         }
-
+        if (unit.equals("nm")){
+            double pixSize = calibration.pixelHeight;
+            cropSize = round((3 * beadSize) / (pixSize/1000));
+        }
+        if (cropSize < 30){
+            cropSize = 30;
+        }
 
 
 
@@ -520,11 +527,28 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         // loops over selected pixels and crops out the PSFs
         for (int i = 0; i < goodX.length; i++){
 
-            interval = FinalInterval.createMinSize(0,0,0,20,20,cropped.dimension(2));
-
-            if (goodX[i]>15 && goodY[i]>15){
-                interval = FinalInterval.createMinSize((int)goodX[i]-15,(int)goodY[i]-15,0,30,30,cropped.dimension(2));
+            long minx, miny, maxx, maxy;
+            minx = 0;
+            miny = 0;
+            maxx = cropSize;
+            maxy = cropSize;
+            if (goodX[i]>cropSize/2 && goodX[i]<cropped.dimension(0)-cropSize){
+                minx = (long) ceil(goodX[i]-cropSize/2);
             }
+            if (goodY[i]>cropSize/2 && goodY[i]<cropped.dimension(1)-cropSize){
+                miny = (long) ceil(goodY[i]-cropSize/2);
+            }
+
+            if (goodX[i]>=cropped.dimension(0)-cropSize){
+                minx = cropped.dimension(0)-cropSize;
+            }
+
+            if (goodY[i]>=cropped.dimension(1)-cropSize){
+                miny = cropped.dimension(1)-cropSize;
+            }
+
+            interval = FinalInterval.createMinSize(minx,miny,0,maxx,maxy,cropped.dimension(2));
+
 
             RandomAccessibleInterval newcropped  = ij.op().transform().crop(cropped,interval, true);
             ImagePlus IPcropped = ImageJFunctions.wrapFloat(newcropped, "test");
@@ -563,23 +587,21 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
     }
 
 
-    public static boolean WriteFile(FileWriter fileWriter,String FilePath, String filename, double[][] BeatResArray){
+    private static void WriteFile(FileWriter fileWriter, String filename, double[][] BeatResArray){
 
 
         try {
 
             //Write the CSV file header
             //Add a new line separator after the header
-            int Datalength = BeatResArray.length;
-            for (int x = 0; x <Datalength; x++)
-            {
+            for (double[] doubles : BeatResArray) {
                 fileWriter.append(filename);
                 fileWriter.append(COMMA_DELIMITER);
-                fileWriter.append(String.valueOf(BeatResArray[x][0]));
+                fileWriter.append(String.valueOf(doubles[0]));
                 fileWriter.append(COMMA_DELIMITER);
-                fileWriter.append(String.valueOf(BeatResArray[x][1]));
+                fileWriter.append(String.valueOf(doubles[1]));
                 fileWriter.append(COMMA_DELIMITER);
-                fileWriter.append(String.valueOf(BeatResArray[x][2]));
+                fileWriter.append(String.valueOf(doubles[2]));
 
                 fileWriter.append(NEW_LINE_SEPARATOR);
 
@@ -591,11 +613,9 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
         }
 
-        return true;
-
     }
 
-    public void CloseFile(FileWriter fileWriter){
+    private void CloseFile(FileWriter fileWriter){
         try {
 
             assert fileWriter != null;
@@ -612,31 +632,14 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
 
 
-    public static double[] GetCoal(ImagePlus beadStack[]){
-        microscope[] micro = new microscope[4];
-        int i;
-        for (i=0;i<4;i++){
-            micro[i] = new microscope(beadStack[0].getCalibration(),microscope.WIDEFIELD,500,1.4,0.0,"","");
-        }
-        coAlignement coal =new coAlignement(beadStack,micro);
-        double[] shifts = new double[3];
-        shifts[0] = coal.RGDistCal;
-        shifts[1] = coal.GBDistCal;
-        shifts[2] = coal.RBDistCal;
-        return shifts;
-
-    }
-
-
     /**
      * This main function serves for development purposes.
      * It allows you to run the plugin immediately out of
      * your integrated development environment (IDE).
      *
      * @param args whatever, it's ignored
-     * @throws Exception
      */
-    public static void main(final String... args) throws Exception {
+    public static void main(final String... args) {
         // create the ImageJ application context with all available services
         //final ImageJ ij = new ImageJ();
         //ij.ui().showUI();

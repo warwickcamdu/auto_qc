@@ -11,11 +11,11 @@ import ij.ImagePlus;
 import ij.gui.NewImage;
 import ij.process.ImageProcessor;
 
-public class HistogramSegmentation {
-    int[] histo;
-    int min = 0;
-    int max = 0;
-    int[] limits;
+class HistogramSegmentation {
+    private int[] histo;
+    private int min = 0;
+    private int max = 0;
+    private int[] limits;
 
     public HistogramSegmentation(ImagePlus ip) {
         int bitDepth = ip.getBitDepth();
@@ -103,7 +103,7 @@ public class HistogramSegmentation {
         return this.histo;
     }
 
-    public double getMean(int nClasse) {
+    private double getMean(int nClasse) {
         --nClasse;
         if (this.limits == null) {
             throw new IllegalArgumentException("calcLimits has not yet been called.");
@@ -138,7 +138,7 @@ public class HistogramSegmentation {
         }
     }
 
-    public int getMedian(int nClasse) {
+    private int getMedian(int nClasse) {
         --nClasse;
         if (this.limits == null) {
             throw new IllegalArgumentException("calcLimits has not yet been called.");
@@ -182,7 +182,7 @@ public class HistogramSegmentation {
         }
     }
 
-    public int getNb(int nClasse) {
+    private int getNb(int nClasse) {
         --nClasse;
         if (this.limits == null) {
             throw new IllegalArgumentException("calcLimits has not yet been called.");
@@ -215,7 +215,7 @@ public class HistogramSegmentation {
         }
     }
 
-    public int getIntegratedInt(int nClasse) {
+    private int getIntegratedInt(int nClasse) {
         --nClasse;
         if (this.limits == null) {
             throw new IllegalArgumentException("calcLimits has not yet been called.");

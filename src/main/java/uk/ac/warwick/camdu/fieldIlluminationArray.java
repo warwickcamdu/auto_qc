@@ -6,7 +6,7 @@ package uk.ac.warwick.camdu;
 //
 
 
-public class fieldIlluminationArray {
+class fieldIlluminationArray {
     public String name;
     public int[] coord;
     public int intensity;

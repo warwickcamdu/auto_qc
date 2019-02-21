@@ -16,7 +16,7 @@ import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.Font;
 
-public class sideViewGenerator {
+class sideViewGenerator {
     public static final int XZ_VIEW = 0;
     public static final int YZ_VIEW = 1;
     public static final int AVG_METHOD = 0;
@@ -149,7 +149,7 @@ public class sideViewGenerator {
         return output;
     }
 
-    public void addScaleBar(ImageProcessor ip, Calibration cal, int barWidth) {
+    private void addScaleBar(ImageProcessor ip, Calibration cal, int barWidth) {
         int fraction = 20;
         int barWidthInPixels = (int)((double)barWidth / cal.pixelWidth);
         int barHeightInPixels = 4;
@@ -168,7 +168,7 @@ public class sideViewGenerator {
         ip.drawString(barString, x + xOffset, y + yOffset);
     }
 
-    public void addCross(ImageProcessor ip, int[] coord, int radius) {
+    private void addCross(ImageProcessor ip, int[] coord, int radius) {
         ip.setColor(Color.white);
         ip.setLineWidth(Math.max(2, Math.max(ip.getWidth(), ip.getHeight()) / 500));
         ip.multiply(0.5D);

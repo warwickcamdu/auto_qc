@@ -10,55 +10,44 @@ package uk.ac.warwick.camdu;
 
 import ij.IJ;
 import ij.ImagePlus;
-
-import java.awt.event.ActionEvent;
-import java.io.FileWriter;
-import java.io.IOException;
-
 import ij.WindowManager;
 import ij.measure.Calibration;
-import ij.plugin.Converter;
-import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 import loci.formats.FormatException;
 import loci.plugins.BF;
-
 import net.imagej.ImageJ;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
-
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import org.scijava.command.Command;
-import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Objects;
 
 
 /**
  */
 
+@SuppressWarnings("unchecked")
 @Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoFOV")
-public class autoFOV<T extends RealType<T>> extends Component implements Command {
+class autoFOV<T extends RealType<T>> extends Component implements Command {
 
-    @Parameter
-    private ImageJ ij;
-    static String COMMA_DELIMITER = ",";
-    static String NEW_LINE_SEPARATOR = "\n";
+    private static final String COMMA_DELIMITER = ",";
+    private static final String NEW_LINE_SEPARATOR = "\n";
 
 
-    String ext = ".dv";
+    private String ext = ".dv";
 
-    Calibration calibration;
+    private Calibration calibration;
 
-    String srcDir = "";
+    private String srcDir = "";
 
     private void setExtension(String extension){
         ext = extension;
@@ -101,7 +90,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
         JButton browseBtn = new JButton("Browse:");
 
-        browseBtn.addActionListener(e -> browseButtonActionPerformed(e));
+        browseBtn.addActionListener(e -> browseButtonActionPerformed());
 
 
 
@@ -120,7 +109,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
         myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.Y_AXIS));
 
-        int result = JOptionPane.showConfirmDialog(
+        JOptionPane.showConfirmDialog(
                 null, myPanel, "autoFOV", JOptionPane.OK_CANCEL_OPTION);
 
         setExtension(extField.getText());
@@ -130,7 +119,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
     }
 
-    private void browseButtonActionPerformed(ActionEvent e) {
+    private void browseButtonActionPerformed() {
 
         JFileChooser chooser = new JFileChooser();
         chooser.setCurrentDirectory(new java.io.File("."));
@@ -157,13 +146,12 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
         createUI();
 
-        ij = new net.imagej.ImageJ();
+        ImageJ ij = new ImageJ();
         //String srcDir = selectedDir.getAbsolutePath();
 
         System.out.println(srcDir);
 
-        ArrayList<String> folders = new ArrayList<String>();
-        ArrayList<String> filenames = new ArrayList<String>();
+
 
         File selectedDir = new File(srcDir);
 
@@ -179,7 +167,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
                 System.out.println("Processing file: " + fileEntry.getName());
                 String path = selectedDir + File.separator + fileEntry.getName();
 
-                currentFile = readFile(path, selectedDir);
+                currentFile = readFile(path);
 
                 double finalResult = processing(currentFile);
 
@@ -199,7 +187,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         CloseFile(fw);
     }
 
-    private Img<FloatType> readFile(String arg, File selectDir) {
+    private Img<FloatType> readFile(String arg) {
 
         //  OpenDialog od = new OpenDialog("Open Image File...", arg);
         //  String dir = od.getDirectory();
@@ -211,9 +199,9 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
         Img<FloatType> imgFinal = ArrayImgs.floats(dimensions);
 
-        ImagePlus[] imps = new ImagePlus[0];
+        ImagePlus[] imps;
 
-        ImagePlus imp = new ImagePlus();
+        ImagePlus imp;
         try {
 
             imps = BF.openImagePlus(arg);
@@ -282,7 +270,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     }
 
 
-    private static boolean WriteFile(FileWriter fileWriter,String filename, double minIntensity){
+    private static void WriteFile(FileWriter fileWriter, String filename, double minIntensity){
 
 
 
@@ -300,8 +288,6 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
             e.printStackTrace();
 
         }
-
-        return true;
 
     }
 
@@ -332,9 +318,8 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
      * your integrated development environment (IDE).
      *
      * @param args whatever, it's ignored
-     * @throws Exception
      */
-    public static void main(final String... args) throws Exception {
+    public static void main(final String... args) {
         // create the ImageJ application context with all available services
         //final ImageJ ij = new ImageJ();
         //ij.ui().showUI();
