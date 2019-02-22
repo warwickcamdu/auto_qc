@@ -10,7 +10,6 @@ package uk.ac.warwick.camdu;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.WindowManager;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 import loci.formats.FormatException;
@@ -22,7 +21,9 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import org.scijava.command.Command;
+import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.widget.FileWidget;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,23 +32,30 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Objects;
 
+import static ij.WindowManager.*;
+
 
 /**
  */
 
 @SuppressWarnings("unchecked")
 @Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoFOV")
-class autoFOV<T extends RealType<T>> extends Component implements Command {
+public class autoFOV<T extends RealType<T>> extends Component implements Command {
 
     private static final String COMMA_DELIMITER = ",";
     private static final String NEW_LINE_SEPARATOR = "\n";
 
+    @Parameter
+    private ImageJ ij;
 
-    private String ext = ".dv";
+    @Parameter(label = "File extension:")
+    private String ext = ".tif";
+
+    @Parameter(style= FileWidget.DIRECTORY_STYLE, label = "select directory:")
+    private File srcDir;
 
     private Calibration calibration;
 
-    private String srcDir = "";
 
     private void setExtension(String extension){
         ext = extension;
@@ -57,7 +65,7 @@ class autoFOV<T extends RealType<T>> extends Component implements Command {
 
 
     private void setDir(String sourceDir){
-        srcDir = sourceDir;
+        srcDir = new File(sourceDir);
 
     }
 
@@ -141,10 +149,11 @@ class autoFOV<T extends RealType<T>> extends Component implements Command {
         setDir(sourceDir);
     }
 
+    @Override
     public void run() {
 
 
-        createUI();
+//        createUI();
 
         ImageJ ij = new ImageJ();
         //String srcDir = selectedDir.getAbsolutePath();
@@ -153,8 +162,8 @@ class autoFOV<T extends RealType<T>> extends Component implements Command {
 
 
 
-        File selectedDir = new File(srcDir);
-
+//        File selectedDir = new File(srcDir);
+        File selectedDir = srcDir;
         Img<FloatType> currentFile;
 
         String resultPath = selectedDir + File.separator + "summary_FOV.csv";
@@ -249,7 +258,12 @@ class autoFOV<T extends RealType<T>> extends Component implements Command {
         fieldIllumination FI = new fieldIllumination(input);
         double finalResult = parseResult(FI.getStringData());
 
-        WindowManager.closeAllWindows();
+        String[] titles = getImageTitles();
+        for (String title:titles){
+            Window window = getWindow(title);
+            window.dispose();
+            removeWindow(window);
+        }
         return finalResult;
 
     }

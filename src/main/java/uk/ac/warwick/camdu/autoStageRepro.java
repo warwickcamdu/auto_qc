@@ -20,6 +20,7 @@ import ij.WindowManager;
 import ij.gui.Roi;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
+import ij.plugin.filter.MaximumFinder;
 import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import loci.formats.FormatException;
@@ -36,6 +37,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.widget.FileWidget;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,6 +52,8 @@ import java.util.Set;
 import static fiji.plugin.trackmate.detection.DetectorKeys.*;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_MERGING;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_SPLITTING;
+import static ij.WindowManager.*;
+import static ij.plugin.filter.MaximumFinder.POINT_SELECTION;
 import static java.lang.Math.*;
 
 
@@ -58,23 +62,31 @@ import static java.lang.Math.*;
 
 @SuppressWarnings({"unchecked"})
 @Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoStageRepro")
-class autoStageRepro<T extends RealType<T>> extends Component implements Command {
+public class autoStageRepro<T extends RealType<T>> extends Component implements Command {
 
     @Parameter
     private ImageJ ij;
 
 
 
-    private String ext = ".dv";
+    @Parameter(label = "File extension:")
+    private String ext = ".tif";
+    @Parameter(label = "number of beads:")
     private int beads = 3;
+    @Parameter(label = "Minimum bead separation (px):")
     private int minSeparation = 15;
+    @Parameter(label = "Bead size (um):")
     private double beadSize = 1.0;
+    @Parameter(label = "Noise threshold:")
     private double noiseTol = 100;
+    @Parameter(style= FileWidget.DIRECTORY_STYLE, label = "select directory:")
+    private File srcDir;
+
     private Calibration calibration;
     private static final String COMMA_DELIMITER = ",";
     private static final String NEW_LINE_SEPARATOR = "\n";
 
-    private String srcDir = "";
+
 
     private void setExtension(String extension){
         ext = extension;
@@ -102,7 +114,7 @@ class autoStageRepro<T extends RealType<T>> extends Component implements Command
     }
 
     private void setDir(String sourceDir){
-        srcDir = sourceDir;
+        srcDir = new File(sourceDir);
 
     }
 
@@ -198,10 +210,12 @@ class autoStageRepro<T extends RealType<T>> extends Component implements Command
         setDir(sourceDir);
     }
 
+
+    @Override
     public void run() {
 
 
-        createUI();
+        //createUI();
 
         ij = new net.imagej.ImageJ();
         //String srcDir = selectedDir.getAbsolutePath();
@@ -210,7 +224,7 @@ class autoStageRepro<T extends RealType<T>> extends Component implements Command
 
 
 
-        File selectedDir = new File(srcDir);
+        File selectedDir = srcDir;
 
         Img<FloatType> currentFile;
         String resultPath = selectedDir + File.separator + "summary_stagerepro.csv";
@@ -395,7 +409,7 @@ class autoStageRepro<T extends RealType<T>> extends Component implements Command
         }
 
 
-        IJ.run("Set Measurements...", "min centroid integrated redirect=None decimal=3");
+        //IJ.run("Set Measurements...", "min centroid integrated redirect=None decimal=3");
         System.out.println("Opened file, processing");
 
         //ImageJFunctions.show(image);
@@ -416,23 +430,26 @@ class autoStageRepro<T extends RealType<T>> extends Component implements Command
         RandomAccessibleInterval finalcrop;
         finalcrop  = ij.op().transform().crop(cropped,interval, true);
         ImageJFunctions.show(finalcrop);
+        ImagePlus imp = IJ.getImage();
+        MaximumFinder mf = new MaximumFinder();
+        Polygon pol = mf.getMaxima(imp.getProcessor(),(int)noiseTol,true);
 
         // detect beads and measure for intensity and x/y coords
-        IJ.run("Find Maxima...", "noise="+noiseTol+" output=[Point Selection] exclude");
-        ImagePlus imp = IJ.getImage();
-        IJ.saveAsTiff(imp,path+"_beads"+File.separator+"allbeads"+".tif");
+        //IJ.run("Find Maxima...", "noise="+noiseTol+" output=[Point Selection] exclude");
+        //ImagePlus imp = IJ.getImage();
+        //IJ.saveAsTiff(imp,path+"_beads"+File.separator+"allbeads"+".tif");
         // Gets coordinates of ROIs
 
-        Roi test = imp.getRoi();
-        FloatPolygon floatPolygon = test.getFloatPolygon();
+        //Roi test = imp.getRoi();
+        //FloatPolygon floatPolygon = test.getFloatPolygon();
 
-        float[][] resultsTable = new float[floatPolygon.npoints][3];
+        float[][] resultsTable = new float[pol.npoints][3];
 
         // loops over ROIs and get pixel Vvlue at their coordinate.
-        for (int i=0; i < floatPolygon.npoints; i++){
+        for (int i=0; i < pol.npoints; i++){
 
-            float intx = floatPolygon.xpoints[i];
-            float inty = floatPolygon.ypoints[i];
+            float intx = pol.xpoints[i];
+            float inty = pol.ypoints[i];
             final RandomAccess<FloatType> r = finalcrop.randomAccess();
             r.setPosition((int) intx,0);
             r.setPosition((int) inty,1);
@@ -581,7 +598,12 @@ class autoStageRepro<T extends RealType<T>> extends Component implements Command
 
         }
 
-        WindowManager.closeAllWindows();
+        String[] titles = getImageTitles();
+        for (String title:titles){
+            Window window = getWindow(title);
+            window.dispose();
+            removeWindow(window);
+        }
         return finalResults;
 
     }
