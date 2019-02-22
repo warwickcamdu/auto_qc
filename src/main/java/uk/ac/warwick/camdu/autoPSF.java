@@ -258,7 +258,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
                 String resultPath = selectedDir + File.separator + "summary_PSF.csv";
 
-                WriteFile(resultPath,finalResult);
+                WriteFile(resultPath,fileEntry.getName(),finalResult);
 
             }
 
@@ -293,6 +293,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             imps = BF.openImagePlus(arg);
             imp = imps[0];
             calibration = imp.getCalibration();
+            imp.setDimensions(1,imp.getNFrames(),1);
 
             imgFinal = ImageJFunctions.convertFloat(imps[0]);
             // for (ImagePlus imp : imps) imp.show();
@@ -301,6 +302,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         } catch (FormatException | IOException exc) {
 
             IJ.error("Sorry, an error occurred: " + exc.getMessage());
+
 
         }
 
@@ -456,7 +458,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 Roi beadROI  = new Roi(resultsTable[firstPosition][0]-15,resultsTable[firstPosition][1]-15,30,30);
                 ImageProcessor ip = imp.getProcessor();
                 //ip.setRoi(beadROI);
-                ip.setValue(10000);
+                ip.setValue(100000);
                 ip.draw(beadROI);
                 goodX[countSpots] = resultsTable[firstPosition][0];
                 goodY[countSpots] = resultsTable[firstPosition][1];
@@ -470,7 +472,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
         IJ.saveAsTiff(imp,path+"_beads"+File.separator+"allbeads"+".tif");
-        double[][] finalResults  = new double[beads][3];
+        double[][] finalResults  = new double[beads][4];
 
 
 
@@ -542,9 +544,10 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             double yRes = qcMetrics[1] * corr_factor_y;
             double zRes = qcMetrics[2] * corr_factor_z;
 
-            finalResults[i][0] = xRes;
-            finalResults[i][1] = yRes;
-            finalResults[i][2] = zRes;
+            finalResults[i][0] = i;
+            finalResults[i][1] = xRes;
+            finalResults[i][2] = yRes;
+            finalResults[i][3] = zRes;
 
 
         }
@@ -560,7 +563,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     }
 
 
-    private static void WriteFile(String FilePath, double[][] BeatResArray){
+    private static void WriteFile(String FilePath, String filename, double[][] BeatResArray){
 
             String COMMA_DELIMITER = ",";
             String NEW_LINE_SEPARATOR = "\n";
@@ -572,7 +575,8 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 //Add a new line separator after the header
                 fileWriter.append(NEW_LINE_SEPARATOR);
                 for (double[] doubles : BeatResArray) {
-
+                    fileWriter.append(filename);
+                    fileWriter.append(COMMA_DELIMITER);
                     fileWriter.append(String.valueOf(doubles[0]));
                     fileWriter.append(COMMA_DELIMITER);
                     fileWriter.append(String.valueOf(doubles[1]));
