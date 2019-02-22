@@ -79,8 +79,8 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
     private double beadSize = 1.0;
     @Parameter(label = "Noise threshold:")
     private double noiseTol = 100;
-    @Parameter(style= FileWidget.DIRECTORY_STYLE, label = "select directory:")
-    private File srcDir;
+    @Parameter(style="files", label = "select files:")
+    private File[] srcDir;
 
     private Calibration calibration;
     private static final String COMMA_DELIMITER = ",";
@@ -113,10 +113,10 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
     }
 
-    private void setDir(String sourceDir){
+    /*private void setDir(String sourceDir){
         srcDir = new File(sourceDir);
 
-    }
+    }*/
 
 
 
@@ -207,7 +207,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         }
 
 
-        setDir(sourceDir);
+        //setDir(sourceDir);
     }
 
 
@@ -224,26 +224,28 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
 
 
-        File selectedDir = srcDir;
+        //File selectedDir = srcDir;
 
         Img<FloatType> currentFile;
-        String resultPath = selectedDir + File.separator + "summary_stagerepro.csv";
+        String selectedDir = srcDir[0].getParent();
+        String resultPath = selectedDir + File.separator + "summary_coloc.csv";
         FileWriter fw = printOutputHeader(resultPath);
 
-        for (final File fileEntry : Objects.requireNonNull(selectedDir.listFiles())){
 
-            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("stage")){
+        for (final File fileEntry : Objects.requireNonNull(srcDir)){
+
+            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("psf")){
 
                 System.out.println("Processing file: " + fileEntry.getName());
-                String path = selectedDir + File.separator + fileEntry.getName();
+                String path = fileEntry.getPath();
 
                 currentFile = readFile(path);
 
-                double[][] finalResult = processing(currentFile, path);
+                double[][] finalResult = processing(currentFile,path);
 
 
 
-                WriteFile(fw, fileEntry.getName(),finalResult);
+                WriteFile(fw,fileEntry.getName(),finalResult);
 
             }
 

@@ -83,8 +83,8 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
     private static final String COMMA_DELIMITER = ",";
     private static final String NEW_LINE_SEPARATOR = "\n";
 
-    @Parameter(style= FileWidget.DIRECTORY_STYLE, label = "select directory:")
-    private File srcDir;
+    @Parameter(style="files", label = "select files:")
+    private File[] srcDir;
 
     private void setExtension(String extension){
         ext = extension;
@@ -111,10 +111,10 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
     }
 
-    private void setDir(String sourceDir){
+    /*private void setDir(String sourceDir){
         srcDir = new File(sourceDir);
 
-    }
+    }*/
 
 
 
@@ -211,7 +211,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
         }
 
 
-        setDir(sourceDir);
+       // setDir(sourceDir);
     }
 
 
@@ -227,22 +227,24 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
         System.out.println(srcDir);
 
 
-        File selectedDir = srcDir;
+        //File selectedDir = srcDir;
 
         Img<FloatType> currentFile;
+        String selectedDir = srcDir[0].getParent();
         String resultPath = selectedDir + File.separator + "summary_coloc.csv";
         FileWriter fw = printOutputHeader(resultPath);
 
-        for (final File fileEntry : Objects.requireNonNull(selectedDir.listFiles())){
 
-            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("coloc")){
+        for (final File fileEntry : Objects.requireNonNull(srcDir)){
+
+            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("psf")){
 
                 System.out.println("Processing file: " + fileEntry.getName());
-                String path = selectedDir + File.separator + fileEntry.getName();
+                String path = fileEntry.getPath();
 
                 currentFile = readFile(path);
 
-                double[][] finalResult = processing(currentFile, path);
+                double[][] finalResult = processing(currentFile,path);
 
 
 
@@ -254,6 +256,8 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
 
         }
+
+
 
         CloseFile(fw);
         // skip irrelevant filenames, do stuff for relevant ones

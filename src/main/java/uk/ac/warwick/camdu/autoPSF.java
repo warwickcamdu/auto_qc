@@ -10,12 +10,10 @@ package uk.ac.warwick.camdu;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.WindowManager;
 import ij.gui.Roi;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.plugin.filter.MaximumFinder;
-import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import loci.formats.FormatException;
 import loci.plugins.BF;
@@ -35,7 +33,6 @@ import net.imglib2.type.numeric.real.FloatType;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.widget.FileWidget;
 
 import javax.swing.*;
 import java.awt.*;

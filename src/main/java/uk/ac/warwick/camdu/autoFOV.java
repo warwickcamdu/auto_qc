@@ -51,8 +51,8 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     @Parameter(label = "File extension:")
     private String ext = ".tif";
 
-    @Parameter(style= FileWidget.DIRECTORY_STYLE, label = "select directory:")
-    private File srcDir;
+    @Parameter(style="files", label = "select files:")
+    private File[] srcDir;
 
     private Calibration calibration;
 
@@ -64,10 +64,10 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
 
-    private void setDir(String sourceDir){
+    /*private void setDir(String sourceDir){
         srcDir = new File(sourceDir);
 
-    }
+    }*/
 
 
     private FileWriter printOutputHeader(String FilePath){
@@ -146,7 +146,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         }
 
 
-        setDir(sourceDir);
+       // setDir(sourceDir);
     }
 
     @Override
@@ -163,22 +163,26 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
 //        File selectedDir = new File(srcDir);
-        File selectedDir = srcDir;
+        //File selectedDir = srcDir;
         Img<FloatType> currentFile;
 
-        String resultPath = selectedDir + File.separator + "summary_FOV.csv";
+
+        String selectedDir = srcDir[0].getParent();
+        String resultPath = selectedDir + File.separator + "summary_coloc.csv";
         FileWriter fw = printOutputHeader(resultPath);
 
-        for (final File fileEntry : Objects.requireNonNull(selectedDir.listFiles())){
 
-            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("fov")){
+        for (final File fileEntry : Objects.requireNonNull(srcDir)){
+
+            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("psf")){
 
                 System.out.println("Processing file: " + fileEntry.getName());
-                String path = selectedDir + File.separator + fileEntry.getName();
+                String path = fileEntry.getPath();
 
                 currentFile = readFile(path);
 
                 double finalResult = processing(currentFile);
+
 
 
                 WriteFile(fw,fileEntry.getName(),finalResult);
@@ -189,6 +193,9 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
         }
+
+
+    
 
 
         // skip irrelevant filenames, do stuff for relevant ones
