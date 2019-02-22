@@ -220,7 +220,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         ij = new net.imagej.ImageJ();
         //String srcDir = selectedDir.getAbsolutePath();
 
-        System.out.println(srcDir);
+        //System.out.println(srcDir);
 
 
 
@@ -234,7 +234,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
-            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("psf")){
+            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("stage")){
 
                 System.out.println("Processing file: " + fileEntry.getName());
                 String path = fileEntry.getPath();

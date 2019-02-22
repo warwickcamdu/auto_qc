@@ -152,13 +152,12 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     @Override
     public void run() {
 
-
 //        createUI();
 
         ImageJ ij = new ImageJ();
         //String srcDir = selectedDir.getAbsolutePath();
 
-        System.out.println(srcDir);
+        //System.out.println(srcDir);
 
 
 
@@ -174,7 +173,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
-            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("psf")){
+            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("fov")){
 
                 System.out.println("Processing file: " + fileEntry.getName());
                 String path = fileEntry.getPath();

@@ -224,7 +224,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
         ij = new net.imagej.ImageJ();
         //String srcDir = selectedDir.getAbsolutePath();
 
-        System.out.println(srcDir);
+        //System.out.println(srcDir);
 
 
         //File selectedDir = srcDir;
@@ -237,7 +237,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
-            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("psf")){
+            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("coloc")){
 
                 System.out.println("Processing file: " + fileEntry.getName());
                 String path = fileEntry.getPath();
