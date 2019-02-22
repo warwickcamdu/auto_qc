@@ -278,7 +278,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
             imps = BF.openImagePlus(arg);
             imp = imps[0];
             calibration = imp.getCalibration();
-
+            imp.setDimensions(1,1,imp.getNFrames());
             imgFinal = ImageJFunctions.convertFloat(imps[0]);
             // for (ImagePlus imp : imps) imp.show();
             // We don't need to show them
