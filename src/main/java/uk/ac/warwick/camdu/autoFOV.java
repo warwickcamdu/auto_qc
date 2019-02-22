@@ -195,7 +195,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         }
 
 
-    
+
 
 
         // skip irrelevant filenames, do stuff for relevant ones
