@@ -582,7 +582,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                     fileWriter.append(String.valueOf(doubles[1]));
                     fileWriter.append(COMMA_DELIMITER);
                     fileWriter.append(String.valueOf(doubles[2]));
-                    fileWriter.append(NEW_LINE_SEPARATOR);
+                    fileWriter.append(COMMA_DELIMITER);
                     fileWriter.append(String.valueOf(doubles[3]));
                     fileWriter.append(NEW_LINE_SEPARATOR);
 
