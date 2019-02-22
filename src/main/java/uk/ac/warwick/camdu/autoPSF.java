@@ -87,8 +87,8 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     private Calibration calibration;
 
-    @Parameter(style= FileWidget.DIRECTORY_STYLE, label = "select directory:")
-    private File srcDir;
+    @Parameter(style="files", label = "select files:")
+    private File[] srcDir;
 
 
     private void setExtension(String extension){
@@ -131,10 +131,10 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     }
 
-    private void setDir(String sourceDir){
+    /*private void setDir(String sourceDir){
         srcDir = new File(sourceDir);
 
-    }
+    }*/
 
 
     private void createUI(){
@@ -224,7 +224,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         }
 
 
-        setDir(sourceDir);
+        //setDir(sourceDir);
     }
 
 
@@ -237,26 +237,26 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         ij = new net.imagej.ImageJ();
         //String srcDir = selectedDir.getAbsolutePath();
 
-        System.out.println(srcDir);
+        //System.out.println(srcDir);
 
 
 
-        File selectedDir =srcDir;
+        //File[] selectedDir =srcDir;
 
         Img<FloatType> currentFile;
 
-        for (final File fileEntry : Objects.requireNonNull(selectedDir.listFiles())){
+        for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
             if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("psf")){
 
                 System.out.println("Processing file: " + fileEntry.getName());
-                String path = selectedDir + File.separator + fileEntry.getName();
+                String path = fileEntry.getPath();
 
                 currentFile = readFile(path);
 
                 double[][] finalResult = processing(currentFile,path);
 
-                String resultPath = selectedDir + File.separator + "summary_PSF.csv";
+                String resultPath = fileEntry.getParent() + File.separator + "summary_PSF.csv";
 
                 WriteFile(resultPath,fileEntry.getName(),finalResult);
 
@@ -571,7 +571,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             try {
                 fileWriter = new FileWriter(FilePath);
                 //Write the CSV file header
-                fileWriter.append("x_resolution").append(COMMA_DELIMITER).append("y_resolution").append(COMMA_DELIMITER).append("z_resolution");
+                fileWriter.append("filename").append("bead_id").append("x_resolution").append(COMMA_DELIMITER).append("y_resolution").append(COMMA_DELIMITER).append("z_resolution");
                 //Add a new line separator after the header
                 fileWriter.append(NEW_LINE_SEPARATOR);
                 for (double[] doubles : BeatResArray) {
