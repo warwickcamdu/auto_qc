@@ -48,11 +48,15 @@ import static java.lang.Math.round;
 
 
 /**
+ *
+ * @param <T>
  */
 
-@SuppressWarnings("unchecked")
 @Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoPSF")
 public class autoPSF<T extends RealType<T>> extends Component implements Command {
+
+
+
 
     @Parameter
     private ImageJ ij;
