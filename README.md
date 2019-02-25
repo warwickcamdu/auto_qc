@@ -3,10 +3,6 @@
 
 ImageJ plugin auto_qc
 
-Created by group 4 of the NEUBIAS trainingschool 11.
-
-Erick Ratamero, Cesar Augusto Valades Cruz, Christopher Schmied, Jan Eckhardt, Paul Stroe.
-
 
 Continuing development by Erick Ratamero, experimental input from Claire Mitchell
 
@@ -17,14 +13,24 @@ Based on the .py scripts from Erick Ratamero:
 
 https://github.com/erickmartins/autoQC_jython
 
+
+Auto-generated Javadoc is available:
+
+https://erickmartins.github.io/auto_qc/
+
+
+Initial work by group 4 of the NEUBIAS trainingschool 11:
+
+Erick Ratamero, Cesar Augusto Valades Cruz, Christopher Schmied, Jan Eckhardt, Paul Stroe.
+
 ==========================================================================================
 
 Usage Instructions:
 
-autoPSF: searches the input directory for images with the string "psf" on their names, expects a Z-stack.  
-autoFOV: searches the input directory for images with the string "fov" on their names, expects a single 2d image.  
-autoColoc: searches the input directory for images with the string "coloc" on their names, expects a 4d image (XYCZT).  
-autoStageRepro: searches the input directory for images with the string "stage" on their names, expects a 3d image (timelapse).  
+autoPSF: expects Z-stacks.  
+autoFOV: expects single 2d images.  
+autoColoc: expects 4d images (XYCZT).  
+autoStageRepro: expects 3d images (timelapse).  
 
 
 
@@ -68,9 +74,4 @@ NEUBIAS and NEUBIAS TS11 organisers for creating the environment
 
 ==========================================================================================
 
-
-----------------------------------------------------------------------------------------
-ToDo:
-
-Documentation of the code
 

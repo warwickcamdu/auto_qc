@@ -23,7 +23,6 @@ import net.imglib2.type.numeric.real.FloatType;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.widget.FileWidget;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +37,18 @@ import static ij.WindowManager.*;
 /**
  */
 
-@SuppressWarnings("unchecked")
+/**
+ *
+ * autoFOV - Fiji routine to generate field-of-view illumination maximum decrease from an image
+ *<p>
+ * This class implements a Fiji routine that reads image files, creates a fieldIllumination
+ * object (using MetroloJ code) and retrieves the maximum decrease in illumination for the field of view. Finally, it
+ * saves the results on a spreadsheet, identifying from which files they come.
+ *</p>
+ * @param <T> I don't think we actually use this
+ * @author Erick Martins Ratamero
+ * @version 1.0
+ */
 @Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoFOV")
 public class autoFOV<T extends RealType<T>> extends Component implements Command {
 
@@ -48,9 +58,15 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     @Parameter
     private ImageJ ij;
 
+    /**
+     * ext : String, file extension of the files to be processed (kinda obsolete with the usage of srcDir)
+     */
     @Parameter(label = "File extension:")
     private String ext = ".tif";
 
+    /**
+     * srcDir: list of files to be processed.
+     */
     @Parameter(style="files", label = "select files:")
     private File[] srcDir;
 
@@ -63,13 +79,30 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     }
 
 
+    /**
+     * setDir: only used when running this as a Java program rather than in Fiji.
+     * @param sourceDir
+     */
+    private void setDir(File[] sourceDir){
+        srcDir = sourceDir;
 
-    /*private void setDir(String sourceDir){
-        srcDir = new File(sourceDir);
-
-    }*/
+    }
 
 
+
+
+    /**
+     * creates a new FileWriter and writes a header to it. Returns the created FileWriter
+     *<p>
+     *     We try to create a new Filewriter and add a header to it. If that does't work, we catch the exception and
+     *     return a null FileWriter.
+     *</p>
+     *
+     *
+     *
+     * @param FilePath string with the path to the output file.
+     * @return fileWriter an instance of FileWriter pointing to the desired file.
+     * */
     private FileWriter printOutputHeader(String FilePath){
         FileWriter fileWriter = null;
         try {
@@ -90,7 +123,17 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     }
 
 
-
+    /**
+     * createUI: generates an UI if running this as Java program rather than in Fiji
+     *
+     *<p>
+     *  Generates JTextFields and a JButton for inputting parameters. The button does stuff when pressed (more on
+     * that later), for the rest it's just a simple JPanel with all the JTextFields. Finally, it uses the set functions
+     * to set the class parameters from the text fields.
+     *</p>
+     *
+     *
+     */
 
     private void createUI(){
         JTextField extField = new JTextField(".tif",10);
@@ -127,18 +170,29 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
     }
 
+
+    /**
+     * Defines what happens when the button for selecting files is clicked.
+     * <p>
+     *     Here, we create a new JFileChooser that can select multiple files, set it at the current directory and
+     *     wait for the user to click ok. When they do, we get the selected files and use one of the set functions
+     *     to populate the class-wide list of files to be processed.
+     * </p>
+     */
     private void browseButtonActionPerformed() {
 
         JFileChooser chooser = new JFileChooser();
+        chooser.setMultiSelectionEnabled(true);
         chooser.setCurrentDirectory(new java.io.File("."));
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setAcceptAllFileFilterUsed(true);
         //chooser.showOpenDialog(this);
         String sourceDir = "";
+        File[] selectedDir = new File[1];
 
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File selectedDir = chooser.getSelectedFile();
-            sourceDir = selectedDir.getAbsolutePath();
+            selectedDir = chooser.getSelectedFiles();
+            //sourceDir = selectedDir.getAbsolutePath();
 
         }
         else {
@@ -146,9 +200,20 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         }
 
 
-       // setDir(sourceDir);
+        setDir(selectedDir);
     }
 
+
+
+    /**
+     * main routine function - goes over the list of files, process them and writes the output values
+     * <p>
+     *     Fairly straightforward method: loops over the list of files that is stored on the class-wide srcDir variable,
+     *     check which ones are of the correct extension and contain the string "fov" (both requirements are probably
+     *     obsolete now that the user can directly choose files), reads the files, calls "processing" to get outputs
+     *     and finally write these outputs into a file.
+     * </p>
+     */
     @Override
     public void run() {
 
@@ -167,7 +232,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
         String selectedDir = srcDir[0].getParent();
-        String resultPath = selectedDir + File.separator + "summary_coloc.csv";
+        String resultPath = selectedDir + File.separator + "summary_FOV.csv";
         FileWriter fw = printOutputHeader(resultPath);
 
 
@@ -202,6 +267,18 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
         CloseFile(fw);
     }
+
+
+    /**
+     * Reads a string with the path to an image file and returns an Img object.
+     * <p>
+     *     We use bioformats to open an ImagePlus, make sure that the input is a Z-stack, then generate an Img
+     *     converting the input to floats. If any of that fails, we catch an exception.
+     * </p>
+     *
+     * @param arg String with the path to file to be read.
+     * @return imgFinal Img object with a Z-stack from the input file.
+     */
 
     private Img<FloatType> readFile(String arg) {
 
@@ -241,6 +318,20 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
     }
 
+
+    /**
+     * Does the meat of the processing routine - takes an Img, returns a single double with the result
+     *<p>
+     * This function gets an Img. From that, it runs fieldIllumination and parses the result string to get the final
+     * result (i.e. maximum decrease in illumination in the field of view).
+
+     *</p>
+     * @param image Img object with the input Z-stack
+
+     * @return finalResult double with the maximum decrease in illumination in the field of view
+     *
+     */
+
     private double processing(Img image){
         //private void processing(Img<FloatType> image){
 
@@ -276,6 +367,15 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     }
 
 
+    /**
+     * Parses the return string from fieldIllumination.getStringData() into the value we're interested
+     * <p>
+     *     Checks all 4 corners of the image for the lowest relative illumination compared to the maximum value
+     *     in the image and returns that as the result.
+     * </p>
+     * @param stats output string from fieldIllumination
+     * @return minVal double with the minimum relative intensity from all 4 corners of the image
+     */
     private double parseResult(String stats){
         double minVal = 1.0;
         String[] lines = stats.split("\n");
@@ -299,6 +399,17 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     }
 
 
+
+    /**
+     * Writes a matrix to an output file.
+     *<p>
+     * Given a FileWriter, we append the filename of the image that was processed and the results for each bead
+     * processed in that image.
+     *</p>
+     * @param fileWriter FileWriter object for the output file
+     * @param filename string with the filename of the image currently being processed
+     * @param minIntensity double with the result for the current image
+     */
     private static void WriteFile(FileWriter fileWriter, String filename, double minIntensity){
 
 
@@ -322,6 +433,11 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
 
+    /**
+     * Flushes and closes the input FileWriter object. Catches exception in case it goes wrong.
+     * @param fileWriter FileWriter object to be closed
+     *
+     */
     private void CloseFile(FileWriter fileWriter){
         try {
 

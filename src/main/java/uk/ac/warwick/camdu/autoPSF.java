@@ -49,95 +49,178 @@ import static java.lang.Math.round;
 
 /**
  *
- * @param <T>
+ * autoPSF - Fiji routine to generate resolution values from an image containing beads
+ *<p>
+ * This class implements a Fiji routine that reads image files, detects beads, crops them, creates a PSFProfiler
+ * object (using MetroloJ code) and retrieves the X/Y/Z FWHM resolutions for each individual bead. Finally, it
+ * saves the results on a spreadsheet, identifying from which files and bead IDs they come, and saves a maximum
+ * projection indicating the chosen beads and individual tiff files for each selected bead.
+ *</p>
+ * @param <T> I don't think we actually use this
+ * @author Erick Martins Ratamero
+ * @version 1.0
  */
 
 @Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoPSF")
 public class autoPSF<T extends RealType<T>> extends Component implements Command {
 
 
+    private static final String COMMA_DELIMITER = ",";
+    private static final String NEW_LINE_SEPARATOR = "\n";
 
+    /**
+     * All parameters are the user-defined inputs from Fiji
+     */
 
     @Parameter
     private ImageJ ij;
 
-
+    /**
+     * ext : String, file extension of the files to be processed (kinda obsolete with the usage of srcDir)
+     */
     @Parameter(label = "File extension:")
     private String ext = ".tif";
-
+    /**
+     * beads : integer, number of beads to be processed per file
+     */
     @Parameter(label = "number of beads:")
     private int beads = 3;
-
+    /**
+     * corr_factor_x/y/z : doubles, correction factor from FWHM resolution values (in case different definition of
+     *                     resolution, or wrong metadata, etc etc)
+     */
     @Parameter(label = "Correction factor (x):")
     private double corr_factor_x = 1.186;
-
+    /**
+     * corr_factor_x/y/z : doubles, correction factor from FWHM resolution values (in case different definition of
+     *                      resolution, or wrong metadata, etc etc)
+     */
     @Parameter(label = "Correction factor (y):")
     private double corr_factor_y = 1.186;
-
+    /**
+     * corr_factor_x/y/z : doubles, correction factor from FWHM resolution values (in case different definition of
+     *                     resolution, or wrong metadata, etc etc)
+     */
     @Parameter(label = "Correction factor (z):")
     private double corr_factor_z = 1.186;
-
+    /**
+     * beadSize : double, estimated size of beads in microns. Defines size of crop.
+     */
     @Parameter(label = "Bead size (um):")
     private double beadSize = 1.0;
-
+    /**
+     * noiseTol : double, value to be used by the Find Maxima routine. Higher means fewer maxima are detected.
+     */
     @Parameter(label = "Noise threshold:")
     private double noiseTol = 100;
-
+    /**
+     * minSeparation: integer, minimum pixel distance between maxima for them to be valid
+     */
     @Parameter(label = "Minimum bead separation (px):")
     private int minSeparation = 15;
 
     private Calibration calibration;
-
+    /**
+     * srcDir: list of files to be processed.
+     */
     @Parameter(style="files", label = "select files:")
     private File[] srcDir;
 
 
+    /**
+     * setExtension: only used when running this as a Java program rather than in Fiji.
+     * @param extension
+     */
     private void setExtension(String extension){
         ext = extension;
 
     }
 
+
+    /**
+     * setBeads: only used when running this as a Java program rather than in Fiji.
+     * @param beadnum
+     */
     private void setBeads(int beadnum){
         beads = beadnum;
 
     }
 
+    /**
+     * setBeadSize: only used when running this as a Java program rather than in Fiji.
+     * @param bsize
+     */
     private void setBeadSize(double bsize){
         beadSize = bsize;
 
     }
 
+    /**
+     * setCorrX: only used when running this as a Java program rather than in Fiji.
+     * @param corr_x
+     */
     private void setCorrX(double corr_x){
         corr_factor_x = corr_x;
 
     }
 
+    /**
+     * setCorrY: only used when running this as a Java program rather than in Fiji.
+     * @param corr_y
+     */
     private void setCorrY(double corr_y){
         corr_factor_y = corr_y;
 
     }
 
+    /**
+     * setCorrZ: only used when running this as a Java program rather than in Fiji.
+     * @param corr_z
+     */
     private void setCorrZ(double corr_z){
         corr_factor_z = corr_z;
 
     }
 
+    /**
+     * setMinSep: only used when running this as a Java program rather than in Fiji.
+     * @param minsep
+     */
     private void setMinSep(int minsep){
         minSeparation = minsep;
 
     }
 
+    /**
+     * setNoiseTol: only used when running this as a Java program rather than in Fiji.
+     * @param ntol
+     */
     private void setNoiseTol(double ntol){
         noiseTol = ntol;
 
     }
 
-    /*private void setDir(String sourceDir){
-        srcDir = new File(sourceDir);
+    /**
+     * setDir: only used when running this as a Java program rather than in Fiji.
+     * @param sourceDir
+     */
+    private void setDir(File[] sourceDir){
+        srcDir = sourceDir;
 
-    }*/
+    }
 
 
+    /**
+     * createUI: generates an UI if running this as Java program rather than in Fiji
+     *
+     *<p>
+     *  Generates JTextFields and a JButton for inputting parameters. The button does stuff when pressed (more on
+     * that later), for the rest it's just a simple JPanel with all the JTextFields. Finally, it uses the set functions
+     * to set the class parameters from the text fields.
+     *</p>
+     *
+     *
+     */
     private void createUI(){
         JTextField extField = new JTextField(".tif",10);
         JTextField beadField = new JTextField("5",5);
@@ -184,7 +267,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         myPanel.add(new JLabel("Noise threshold:"));
         myPanel.add(noiseTolField);
 
-        myPanel.add(new JLabel("Please select your dataset:"));
+        myPanel.add(new JLabel("Please select your files:"));
         myPanel.add(browseBtn);
 
         myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.Y_AXIS));
@@ -206,18 +289,29 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     }
 
+
+    /**
+     * Defines what happens when the button for selecting files is clicked.
+     * <p>
+     *     Here, we create a new JFileChooser that can select multiple files, set it at the current directory and
+     *     wait for the user to click ok. When they do, we get the selected files and use one of the set functions
+     *     to populate the class-wide list of files to be processed.
+     * </p>
+     */
     private void browseButtonActionPerformed() {
 
         JFileChooser chooser = new JFileChooser();
+        chooser.setMultiSelectionEnabled(true);
         chooser.setCurrentDirectory(new java.io.File("."));
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setAcceptAllFileFilterUsed(true);
         //chooser.showOpenDialog(this);
         String sourceDir = "";
+        File[] selectedDir = new File[1];
 
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File selectedDir = chooser.getSelectedFile();
-            sourceDir = selectedDir.getAbsolutePath();
+            selectedDir = chooser.getSelectedFiles();
+            //sourceDir = selectedDir.getAbsolutePath();
 
         }
         else {
@@ -225,10 +319,51 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         }
 
 
-        //setDir(sourceDir);
+        setDir(selectedDir);
     }
 
 
+    /**
+     * creates a new FileWriter and writes a header to it. Returns the created FileWriter
+     *<p>
+     *     We try to create a new Filewriter and add a header to it. If that does't work, we catch the exception and
+     *     return a null FileWriter.
+     *</p>
+     *
+     *
+     *
+     * @param FilePath string with the path to the output file.
+     * @return fileWriter an instance of FileWriter pointing to the desired file.
+     */
+    private FileWriter printOutputHeader(String FilePath){
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(FilePath);
+            //Write the CSV file header
+            fileWriter.append("filename").append("bead_id").append("x_resolution").append(COMMA_DELIMITER).append("y_resolution").append(COMMA_DELIMITER).append("z_resolution");
+            //Add a new line separator after the header
+            fileWriter.append(NEW_LINE_SEPARATOR);
+
+        } catch (Exception e) {
+
+            System.out.println("Error in CsvFileWriter !!!");
+            e.printStackTrace();
+
+        }
+
+        return fileWriter;
+    }
+
+
+    /**
+     * main routine function - goes over the list of files, process them and writes the output values
+     * <p>
+     *     Fairly straightforward method: loops over the list of files that is stored on the class-wide srcDir variable,
+     *     check which ones are of the correct extension and contain the string "psf" (both requirements are probably
+     *     obsolete now that the user can directly choose files), reads the files, calls "processing" to get outputs
+     *     and finally write these outputs into a file.
+     * </p>
+     */
     @Override
     public void run() {
 
@@ -243,7 +378,9 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
         //File[] selectedDir =srcDir;
-
+        String selectedDir = srcDir[0].getParent();
+        String resultPath = selectedDir + File.separator + "summary_PSF.csv";
+        FileWriter fw = printOutputHeader(resultPath);
         Img<FloatType> currentFile;
 
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
@@ -259,9 +396,9 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 double[][] finalResult = processing(currentFile,path);
                 System.out.println("Writing output: ");
 
-                String resultPath = fileEntry.getParent() + File.separator + "summary_PSF.csv";
 
-                WriteFile(resultPath,fileEntry.getName(),finalResult);
+
+                WriteFile(fw,fileEntry.getName(),finalResult);
 
             }
 
@@ -273,9 +410,19 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         // skip irrelevant filenames, do stuff for relevant ones
 
-
+        CloseFile(fw);
     }
 
+    /**
+     * Reads a string with the path to an image file and returns an Img object.
+     * <p>
+     *     We use bioformats to open an ImagePlus, make sure that the input is a Z-stack, then generate an Img
+     *     converting the input to floats. If any of that fails, we catch an exception.
+     * </p>
+     *
+     * @param arg String with the path to file to be read.
+     * @return imgFinal Img object with a Z-stack from the input file.
+     */
     private Img<FloatType> readFile(String arg) {
 
         //  OpenDialog od = new OpenDialog("Open Image File...", arg);
@@ -316,6 +463,21 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     }
 
+
+    /**
+     * Does the meat of the processing routine - takes an Img, returns a double[][] matrix with all the results
+     *<p>
+     * This function gets an Img and a string with the path to th original file. From that, it tries to create a
+     * directory for the outputs (beads, indication of where the chosen beads were). Then, it crops a 300x300 area at
+     * the centre of the image, does a maximum projection of the original Z-stack, finds maxima on it. Then, it goes
+     * through each maximum, checks it's valid (given minimum separation between maxima) and, for the valid ones up
+     * to the number of desired beads, crops them, runs PSFProfiler and retrieves the resolution values. Finally,
+     * it returns a matrix with bead IDs, X/Y/Z resolutions for that input file.
+     *</p>
+     * @param image Img object with the input Z-stack
+     * @param path String with the path to the original image file that is being processed
+     * @return finalResults double[][] matrix with all the resolution results for all the beads in this image
+     */
     private double[][] processing(Img image, String path){
     //private void processing(Img<FloatType> image){
 
@@ -566,15 +728,21 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     }
 
 
-    private static void WriteFile(String FilePath, String filename, double[][] BeadResArray){
+    /**
+     * Writes a matrix to an output file.
+     *<p>
+     * Given a FileWriter, we append the filename of the image that was processed and the results for each bead
+     * processed in that image.
+     *</p>
+     * @param fileWriter FileWriter object for the output file
+     * @param filename string with the filename of the image currently being processed
+     * @param BeadResArray double[][] matrix with the results for the current image
+     */
+    private static void WriteFile(FileWriter fileWriter, String filename, double[][] BeadResArray){
 
-            String COMMA_DELIMITER = ",";
-            String NEW_LINE_SEPARATOR = "\n";
-            FileWriter fileWriter = null;
+
             try {
-                fileWriter = new FileWriter(FilePath);
-                //Write the CSV file header
-                fileWriter.append("filename").append("bead_id").append("x_resolution").append(COMMA_DELIMITER).append("y_resolution").append(COMMA_DELIMITER).append("z_resolution");
+
                 //Add a new line separator after the header
                 fileWriter.append(NEW_LINE_SEPARATOR);
                 for (double[] doubles : BeadResArray) {
@@ -614,11 +782,36 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     }
 
-    private static double[] GetRes(ImagePlus BeatStack){
+    /**
+     * Wrapper for creating a PSFProfiler and returning the resolutions.
+     * @param BeadStack ImagePlus with a bead crop (MetroloJ requires ImagePlus to work)
+     * @return profiler.getResolutions() a double[] array with the X/Y/Z resolution values
+     */
+    private static double[] GetRes(ImagePlus BeadStack){
 
-        PSFprofiler profiler=new PSFprofiler(BeatStack);
+        PSFprofiler profiler=new PSFprofiler(BeadStack);
         return profiler.getResolutions();
 
+    }
+
+    /**
+     * Flushes and closes the input FileWriter object. Catches exception in case it goes wrong.
+     * @param fileWriter FileWriter object to be closed
+     *
+     */
+    private void CloseFile(FileWriter fileWriter){
+        try {
+
+            assert fileWriter != null;
+            fileWriter.flush();
+            fileWriter.close();
+
+        } catch (IOException e) {
+
+            System.out.println("Error while flushing/closing fileWriter !!!");
+            e.printStackTrace();
+
+        }
     }
 
 
