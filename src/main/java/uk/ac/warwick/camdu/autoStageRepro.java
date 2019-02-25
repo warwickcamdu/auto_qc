@@ -612,14 +612,14 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
     }
 
 
-    private static void WriteFile(FileWriter fileWriter, String filename, double[][] BeatResArray){
+    private static void WriteFile(FileWriter fileWriter, String filename, double[][] BeadResArray){
 
 
         try {
 
             //Write the CSV file header
             //Add a new line separator after the header
-            for (double[] doubles : BeatResArray) {
+            for (double[] doubles : BeadResArray) {
                 fileWriter.append(filename);
                 fileWriter.append(COMMA_DELIMITER);
                 fileWriter.append(String.valueOf(doubles[0]));

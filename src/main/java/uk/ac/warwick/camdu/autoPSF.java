@@ -566,7 +566,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     }
 
 
-    private static void WriteFile(String FilePath, String filename, double[][] BeatResArray){
+    private static void WriteFile(String FilePath, String filename, double[][] BeadResArray){
 
             String COMMA_DELIMITER = ",";
             String NEW_LINE_SEPARATOR = "\n";
@@ -577,7 +577,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 fileWriter.append("filename").append("bead_id").append("x_resolution").append(COMMA_DELIMITER).append("y_resolution").append(COMMA_DELIMITER).append("z_resolution");
                 //Add a new line separator after the header
                 fileWriter.append(NEW_LINE_SEPARATOR);
-                for (double[] doubles : BeatResArray) {
+                for (double[] doubles : BeadResArray) {
                     fileWriter.append(filename);
                     fileWriter.append(COMMA_DELIMITER);
                     fileWriter.append(String.valueOf(doubles[0]));
