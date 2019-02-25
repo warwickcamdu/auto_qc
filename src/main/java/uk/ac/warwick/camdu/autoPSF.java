@@ -250,12 +250,14 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
             if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("psf")){
 
-                System.out.println("Processing file: " + fileEntry.getName());
+                System.out.println("Opening file: " + fileEntry.getName());
                 String path = fileEntry.getPath();
 
                 currentFile = readFile(path);
+                System.out.println("Processing file: " + fileEntry.getName());
 
                 double[][] finalResult = processing(currentFile,path);
+                System.out.println("Writing output: ");
 
                 String resultPath = fileEntry.getParent() + File.separator + "summary_PSF.csv";
 

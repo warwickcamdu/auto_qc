@@ -239,14 +239,15 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
             if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("coloc")){
 
-                System.out.println("Processing file: " + fileEntry.getName());
+                System.out.println("Opening file: " + fileEntry.getName());
                 String path = fileEntry.getPath();
 
                 currentFile = readFile(path);
+                System.out.println("Processing file: " + fileEntry.getName());
 
                 double[][] finalResult = processing(currentFile,path);
 
-
+                System.out.println("Writing output: ");
 
                 WriteFile(fw,fileEntry.getName(),finalResult);
 

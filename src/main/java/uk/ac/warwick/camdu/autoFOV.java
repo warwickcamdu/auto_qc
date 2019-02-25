@@ -175,14 +175,15 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
             if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("fov")){
 
-                System.out.println("Processing file: " + fileEntry.getName());
+                System.out.println("Opening file: " + fileEntry.getName());
                 String path = fileEntry.getPath();
 
                 currentFile = readFile(path);
+                System.out.println("Processing file: " + fileEntry.getName());
 
                 double finalResult = processing(currentFile);
 
-
+                System.out.println("Writing output: ");
 
                 WriteFile(fw,fileEntry.getName(),finalResult);
 
