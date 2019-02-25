@@ -49,7 +49,6 @@ class findCentre {
             default:
                 proj = (new sideViewGenerator()).getXYview(ip, 3);
         }
-
         (new ImageConverter(proj)).convertToGray8();
         proj.updateImage();
         HistogramSegmentation hs = new HistogramSegmentation(proj);
@@ -61,13 +60,19 @@ class findCentre {
         coord[0] = is.xCenterOfMass;
         coord[1] = is.yCenterOfMass;
         EllipseFitter ef = new EllipseFitter();
-
+        double previous = 0.0;
         do {
+
             wand.autoOutline((int)(coord[0] + 0.5D), (int)(coord[1] + 0.5D), 128, 255);
             proj.setRoi(new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, 2));
             ef.fit(proj.getProcessor(), (ImageStatistics)null);
             coord[0] = ef.xCenter + 1.0D;
             coord[1] = ef.yCenter;
+            if (ef.minor - previous <0.00001){
+                break;
+            }else{
+                previous = ef.minor;
+            }
         } while(ef.minor < 2.0D);
 
         int var10002 = (int)coord[0]--;

@@ -41,9 +41,9 @@ class coAlignement {
 
     public coAlignement(ImagePlus[] ip, microscope[] conditions) {
         if (ip.length < 2) {
-            throw new IllegalArgumentException("coAlignement requieres at least 2 ImagePlus.");
+            throw new IllegalArgumentException("coAlignement requires at least 2 ImagePlus.");
         } else if (ip.length != conditions.length) {
-            throw new IllegalArgumentException("coAlignement requieres the ImagePlus array to be the same size as the microscope array.");
+            throw new IllegalArgumentException("coAlignement requires the ImagePlus array to be the same size as the microscope array.");
         } else {
             this.red = ip[0];
             this.green = ip[1];
@@ -52,7 +52,6 @@ class coAlignement {
             if (ip.length >= 3) {
                 this.blue = ip[2];
             }
-
             if (this.red.getNSlices() == 1) {
                 throw new IllegalArgumentException("coAlignement requieres all channels to have the save size and to be of same type.");
             } else if (this.red.getWidth() == this.green.getWidth() && this.red.getHeight() == this.green.getHeight() && this.red.getNSlices() == this.green.getNSlices() && this.red.getBitDepth() == this.green.getBitDepth()) {
@@ -79,12 +78,17 @@ class coAlignement {
     }
 
     private void getCentresAndDist() {
+
         this.redCentre = (new findCentre()).getAllCoordinates(this.red);
+
         this.greenCentre = (new findCentre()).getAllCoordinates(this.green);
+
         this.RGRefDist = this.calcRefDist(this.redCentre, this.greenCentre, this.micro[1]);
         this.RGDistUnCal = this.dist(this.redCentre, this.greenCentre, 1.0D, 1.0D, 1.0D);
         this.RGDistCal = this.dist(this.redCentre, this.greenCentre, this.cal.pixelWidth, this.cal.pixelHeight, this.cal.pixelDepth);
+
         if (this.blue != null) {
+
             this.blueCentre = (new findCentre()).getAllCoordinates(this.blue);
             this.RBDistUnCal = this.dist(this.redCentre, this.blueCentre, 1.0D, 1.0D, 1.0D);
             this.RBDistCal = this.dist(this.redCentre, this.blueCentre, this.cal.pixelWidth, this.cal.pixelHeight, this.cal.pixelDepth);
@@ -93,6 +97,7 @@ class coAlignement {
             this.GBDistCal = this.dist(this.greenCentre, this.blueCentre, this.cal.pixelWidth, this.cal.pixelHeight, this.cal.pixelDepth);
             this.GBRefDist = this.calcRefDist(this.greenCentre, this.blueCentre, this.micro[2]);
         }
+
 
     }
 
