@@ -244,6 +244,11 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
                 String path = fileEntry.getPath();
 
                 currentFile = readFile(path);
+
+                if (currentFile == null){
+                    continue;
+                }
+
                 System.out.println("Processing file: " + fileEntry.getName());
 
                 double finalResult = processing(currentFile);
@@ -300,6 +305,10 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
             imps = BF.openImagePlus(arg);
             imp = imps[0];
             calibration = imp.getCalibration();
+            if (imp.getNDimensions() > 2){
+                IJ.error("Number of image dimensions is larger than 2");
+                return null;
+            }
 
             imgFinal = ImageJFunctions.convertFloat(imps[0]);
             // for (ImagePlus imp : imps) imp.show();

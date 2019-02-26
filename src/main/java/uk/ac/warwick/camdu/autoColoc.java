@@ -387,7 +387,15 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
         try {
 
             imps = BF.openImagePlus(arg);
+
             imp = imps[0];
+            if (imp.getNDimensions() != 4){
+                IJ.error("Number of image dimensions is different from 4");
+                return null;
+            }
+            if (imp.getDimensions()[2] > 3){
+                System.out.println("WARNING: number of channels is larger than 3. Make sure your dimensions are in the right order!");
+            }
             calibration = imp.getCalibration();
 
             imgFinal = ImageJFunctions.convertFloat(imps[0]);

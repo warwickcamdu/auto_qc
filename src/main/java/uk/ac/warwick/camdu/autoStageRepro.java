@@ -336,6 +336,9 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
                 String path = fileEntry.getPath();
 
                 currentFile = readFile(path);
+                if (currentFile == null){
+                    continue;
+                }
                 System.out.println("Processing file: " + fileEntry.getName());
 
                 double[][] finalResult = processing(currentFile,path);
@@ -388,6 +391,10 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
             imps = BF.openImagePlus(arg);
             imp = imps[0];
+            if (imp.getNDimensions() != 3){
+                IJ.error("Number of image dimensions is not 3");
+                return null;
+            }
             calibration = imp.getCalibration();
             imp.setDimensions(1,1,imp.getNFrames());
             imgFinal = ImageJFunctions.convertFloat(imps[0]);
