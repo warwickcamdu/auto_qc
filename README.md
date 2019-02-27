@@ -5,33 +5,29 @@
 ImageJ plugin auto_qc
 
 
-Continuing development by Erick Ratamero, experimental input from Claire Mitchell
-
+Continuing development by Erick Ratamero, experimental input from Claire Mitchell  
 https://www.warwick.ac.uk/camdu
 
 
-Based on the .py scripts from Erick Ratamero:
-
+Based on the .py scripts from Erick Ratamero:  
 https://github.com/erickmartins/autoQC_jython
 
 
-Auto-generated Javadoc is available:
-
+Auto-generated Javadoc is available:  
 https://erickmartins.github.io/auto_qc/
 
 
-Initial work by group 4 of the NEUBIAS trainingschool 11:
-
+Initial work by group 4 of the NEUBIAS trainingschool 11:  
 Erick Ratamero, Cesar Augusto Valades Cruz, Christopher Schmied, Jan Eckhardt, Paul Stroe.
 
 ==========================================================================================
 
 Usage Instructions:
 
-autoPSF: expects Z-stacks with sub-resolution fluorescent beads.
-autoFOV: expects single 2d images of a fluorescent slide (uniform sample).
-autoColoc: expects 4d images (XYCZT) of larger-than-resolution fluorescent beads.
-autoStageRepro: expects 3d images (timelapse). Each timepoint should be recorded after translating the stage and moving it back to its original position.
+autoPSF: expects Z-stacks with sub-resolution fluorescent beads.  
+autoFOV: expects single 2d images of a fluorescent slide (uniform sample).  
+autoColoc: expects 4d images (XYCZT) of larger-than-resolution fluorescent beads.  
+autoStageRepro: expects 3d images (timelapse). Each timepoint should be recorded after translating the stage and moving it back to its original position.  
 
 When in doubt, consult the [MetroloJ Manual](http://imagejdocu.tudor.lu/lib/exe/fetch.php?media=plugin:analysis:metroloj:metroloj.pdf) for detailed protocols.
 
@@ -41,28 +37,25 @@ When in doubt, consult the [MetroloJ Manual](http://imagejdocu.tudor.lu/lib/exe/
 Citations:
 
 
-Based on ImageJ:
-
+Based on ImageJ:  
 Schneider, C. A.; Rasband, W. S. & Eliceiri, K. W. (2012), "NIH Image to ImageJ: 25 years of image analysis", Nature methods 9(7): 671-675, PMID 22930834
 
-Used to run Fiji in the background:
-
+Used to run Fiji in the background:  
 Schindelin, J.; Arganda-Carreras, I. & Frise, E. et al. (2012), "Fiji: an open-source platform for biological-image analysis", Nature methods 9(7): 676-682, PMID 22743772, doi:10.1038/nmeth.2019
 
 
-Uses the following plugins:
+Uses the following plugins:  
 
-bioformats (https://www.openmicroscopy.org/bio-formats/)
-
+bioformats (https://www.openmicroscopy.org/bio-formats/)  
 Melissa Linkert, Curtis T. Rueden, Chris Allan, Jean-Marie Burel, Will Moore, Andrew Patterson, Brian Loranger, Josh Moore, Carlos Neves, Donald MacDonald, Aleksandra Tarkowska, Caitlin Sticco, Emma Hill, Mike Rossner, Kevin W. Eliceiri, and Jason R. Swedlow (2010) Metadata matters: access to image data in the real world. The Journal of Cell Biology 189(5), 777-782. doi: 10.1083/jcb.201004104
 
 
 Uses code from:
 
-MetroloJ (http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:metroloj:start)
+MetroloJ (http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:metroloj:start)  
 Cédric Matthews and Fabrice P. Cordelieres, MetroloJ : an ImageJ plugin to help monitor microscopes' health, in ImageJ User & Developer Conference 2010 proceedings
 
-TrackMate (https://imagej.net/TrackMate)
+TrackMate (https://imagej.net/TrackMate)  
 Tinevez, JY.; Perry, N. & Schindelin, J. et al. (2016), "TrackMate: An open and extensible platform for single-particle tracking.", Methods 115: 80-90, PMID 27713081
 
 
