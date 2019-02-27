@@ -69,11 +69,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     @Parameter
     private ImageJ ij;
 
-    /**
-     * ext : String, file extension of the files to be processed (kinda obsolete with the usage of srcDir)
-     */
-    @Parameter(label = "File extension:")
-    private String ext = ".tif";
+
     /**
      * beads : integer, number of beads to be processed per file
      */
@@ -121,14 +117,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     private File[] srcDir;
 
 
-    /**
-     * setExtension: only used when running this as a Java program rather than in Fiji.
-     * @param extension
-     */
-    private void setExtension(String extension){
-        ext = extension;
 
-    }
 
 
     /**
@@ -216,7 +205,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      *
      */
     private void createUI(){
-        JTextField extField = new JTextField(".tif",10);
+
         JTextField beadField = new JTextField("5",5);
         JTextField beadSizeField = new JTextField("1",5);
         JTextField corrXField = new JTextField("1.168",5);
@@ -237,8 +226,6 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         JPanel myPanel = new JPanel();
 
-        myPanel.add(new JLabel("File extension:"));
-        myPanel.add(extField);
 
         myPanel.add(new JLabel("Number of beads:"));
         myPanel.add(beadField);
@@ -269,7 +256,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         JOptionPane.showConfirmDialog(
                 null, myPanel, "autoColoc", JOptionPane.OK_CANCEL_OPTION);
 
-        setExtension(extField.getText());
+
         setBeads(Integer.parseInt(beadField.getText()));
         setCorrX(Double.parseDouble(corrXField.getText()));
         setCorrY(Double.parseDouble(corrYField.getText()));
@@ -379,7 +366,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
-            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("psf")){
+
 
                 System.out.println("Opening file: " + fileEntry.getName());
                 String path = fileEntry.getPath();
@@ -397,7 +384,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
                 WriteFile(fw,fileEntry.getName(),finalResult);
 
-            }
+
 
 
 

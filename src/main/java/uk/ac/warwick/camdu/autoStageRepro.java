@@ -71,11 +71,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
 
 
-    /**
-     * ext : String, file extension of the files to be processed (kinda obsolete with the usage of srcDir)
-     */
-    @Parameter(label = "File extension:")
-    private String ext = ".tif";
+
 
     /**
      * beads : integer, number of beads to be processed per file
@@ -112,14 +108,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
     private static final String NEW_LINE_SEPARATOR = "\n";
 
 
-    /**
-     * setExtension: only used when running this as a Java program rather than in Fiji.
-     * @param extension
-     */
-    private void setExtension(String extension){
-        ext = extension;
 
-    }
     /**
      * setBeads: only used when running this as a Java program rather than in Fiji.
      * @param beadnum
@@ -207,7 +196,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
      *
      */
     private void createUI(){
-        JTextField extField = new JTextField(".tif",10);
+
         JTextField beadField = new JTextField("1",5);
         JTextField beadSizeField = new JTextField("1",5);
         JTextField sepField = new JTextField("30",5);
@@ -225,8 +214,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
         JPanel myPanel = new JPanel();
 
-        myPanel.add(new JLabel("File extension:"));
-        myPanel.add(extField);
+
 
         myPanel.add(new JLabel("Number of beads:"));
         myPanel.add(beadField);
@@ -245,7 +233,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         JOptionPane.showConfirmDialog(
                 null, myPanel, "autoColoc", JOptionPane.OK_CANCEL_OPTION);
 
-        setExtension(extField.getText());
+
         setBeads(Integer.parseInt(beadField.getText()));
         setBeadSize(Double.parseDouble(beadSizeField.getText()));
         setMinSep(Integer.parseInt(sepField.getText()));
@@ -322,7 +310,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
-            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("stage")){
+
 
                 System.out.println("Opening file: " + fileEntry.getName());
                 String path = fileEntry.getPath();
@@ -339,7 +327,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
                 WriteFile(fw,fileEntry.getName(),finalResult);
 
-            }
+           
 
 
 
@@ -602,6 +590,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
         // Sorts the Pixel coordinates by the intensity value.
         //java.util.Arrays.sort(resultsTable, Comparator.comparingDouble(a -> a[2]));
+        //We're now sorting for highest intensities
         java.util.Arrays.sort(resultsTable, (v1,v2)->Float.compare(v2[2],v1[2]));
 
         int countSpots = 0;

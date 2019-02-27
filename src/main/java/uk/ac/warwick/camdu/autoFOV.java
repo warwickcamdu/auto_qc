@@ -52,11 +52,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     @Parameter
     private ImageJ ij;
 
-    /**
-     * ext : String, file extension of the files to be processed (kinda obsolete with the usage of srcDir)
-     */
-    @Parameter(label = "File extension:")
-    private String ext = ".tif";
+
 
     /**
      * srcDir: list of files to be processed.
@@ -67,10 +63,6 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     private Calibration calibration;
 
 
-    private void setExtension(String extension){
-        ext = extension;
-
-    }
 
 
     /**
@@ -130,7 +122,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
      */
 
     private void createUI(){
-        JTextField extField = new JTextField(".tif",10);
+
 
 
         JButton browseBtn = new JButton("Browse:");
@@ -145,8 +137,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
         JPanel myPanel = new JPanel();
 
-        myPanel.add(new JLabel("File extension:"));
-        myPanel.add(extField);
+
 
 
         myPanel.add(new JLabel("Please select your datset:"));
@@ -157,7 +148,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         JOptionPane.showConfirmDialog(
                 null, myPanel, "autoFOV", JOptionPane.OK_CANCEL_OPTION);
 
-        setExtension(extField.getText());
+
 
 
 
@@ -232,7 +223,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
-            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("fov")){
+
 
                 System.out.println("Opening file: " + fileEntry.getName());
                 String path = fileEntry.getPath();
@@ -251,7 +242,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
                 WriteFile(fw,fileEntry.getName(),finalResult);
 
-            }
+
 
 
 

@@ -66,11 +66,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
     @Parameter
     private ImageJ ij;
 
-    /**
-     * ext : String, file extension of the files to be processed (kinda obsolete with the usage of srcDir)
-     */
-    @Parameter(label = "File extension:")
-    private String ext = ".tif";
+
     /**
      * beads : integer, number of beads to be processed per file
      */
@@ -102,14 +98,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
      */
     @Parameter(style="files", label = "select files:")
     private File[] srcDir;
-    /**
-     * setExtension: only used when running this as a Java program rather than in Fiji.
-     * @param extension
-     */
-    private void setExtension(String extension){
-        ext = extension;
 
-    }
     /**
      * setBeads: only used when running this as a Java program rather than in Fiji.
      * @param beadnum
@@ -199,7 +188,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
      *
      */
     private void createUI(){
-        JTextField extField = new JTextField(".tif",10);
+
         JTextField beadField = new JTextField("1",5);
         JTextField beadSizeField = new JTextField("1",5);
         JTextField sepField = new JTextField("30",5);
@@ -218,8 +207,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
         JPanel myPanel = new JPanel();
 
-        myPanel.add(new JLabel("File extension:"));
-        myPanel.add(extField);
+
 
         myPanel.add(new JLabel("Number of beads:"));
         myPanel.add(beadField);
@@ -243,7 +231,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
         JOptionPane.showConfirmDialog(
                 null, myPanel, "autoColoc", JOptionPane.OK_CANCEL_OPTION);
 
-        setExtension(extField.getText());
+
         setBeads(Integer.parseInt(beadField.getText()));
         setBeadSize(Double.parseDouble(beadSizeField.getText()));
         setMinSep(Integer.parseInt(sepField.getText()));
@@ -321,7 +309,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
-            if (fileEntry.getName().endsWith(ext)&&fileEntry.getName().contains("coloc")){
+
 
                 System.out.println("Opening file: " + fileEntry.getName());
                 String path = fileEntry.getPath();
@@ -335,7 +323,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
                 WriteFile(fw,fileEntry.getName(),finalResult);
 
-            }
+
 
 
 
