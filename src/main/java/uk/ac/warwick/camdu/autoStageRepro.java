@@ -601,7 +601,8 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
 
         // Sorts the Pixel coordinates by the intensity value.
-        java.util.Arrays.sort(resultsTable, Comparator.comparingDouble(a -> a[2]));
+        //java.util.Arrays.sort(resultsTable, Comparator.comparingDouble(a -> a[2]));
+        java.util.Arrays.sort(resultsTable, (v1,v2)->Float.compare(v2[2],v1[2]));
 
         int countSpots = 0;
         int firstPosition = 0;
