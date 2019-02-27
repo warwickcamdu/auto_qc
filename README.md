@@ -28,10 +28,12 @@ Erick Ratamero, Cesar Augusto Valades Cruz, Christopher Schmied, Jan Eckhardt, P
 
 Usage Instructions:
 
-autoPSF: expects Z-stacks.  
-autoFOV: expects single 2d images.  
-autoColoc: expects 4d images (XYCZT).  
-autoStageRepro: expects 3d images (timelapse).  
+autoPSF: expects Z-stacks with sub-resolution fluorescent beads.
+autoFOV: expects single 2d images of a fluorescent slide (uniform sample).
+autoColoc: expects 4d images (XYCZT) of larger-than-resolution fluorescent beads.
+autoStageRepro: expects 3d images (timelapse). Each timepoint should be recorded after translating the stage and moving it back to its original position.
+
+When in doubt, consult the [MetroloJ Manual](http://imagejdocu.tudor.lu/lib/exe/fetch.php?media=plugin:analysis:metroloj:metroloj.pdf) for detailed protocols.
 
 
 
