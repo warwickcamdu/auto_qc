@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/169840753.svg)](https://zenodo.org/badge/latestdoi/169840753)  [![Scaladoc](https://javadoc-badge.appspot.com/uk.ac.warwick.camdu/nscala-time_2.11.svg?label=javadoc)](https://erickmartins.github.io/auto_qc/)
+[![DOI](https://zenodo.org/badge/169840753.svg)](https://zenodo.org/badge/latestdoi/169840753)  [![Scaladoc](https://javadoc-badge.appspot.com/uk.ac.warwick.camdu/nscala-time_2.11.svg?label=javadoc)](https://erickmartins.github.io/auto_qc/) [![Build Status](https://travis-ci.com/erickmartins/auto_qc.svg?branch=master)](https://travis-ci.com/erickmartins/auto_qc)
 
 
 
