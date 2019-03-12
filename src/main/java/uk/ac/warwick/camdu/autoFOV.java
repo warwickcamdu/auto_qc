@@ -315,13 +315,13 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
             imps = new ImagePlus[1];
             for (i = 0; i < process.getSeriesCount(); i++) {
                 if(process.getSeriesLabel(i).contains(match)){
-                    System.out.println(process.getSeriesLabel(i));
+                    //System.out.println(process.getSeriesLabel(i));
                     ImporterOptions int_options = new ImporterOptions();
                     int_options.setId(arg);
                     int_options.setSeriesOn(i,true);
                     imps = BF.openImagePlus(int_options);
                     imp = imps[0];
-                    System.out.println(imp.getProperties().toString());
+                    //System.out.println(imp.getProperties().toString());
                     calibration = imp.getCalibration();
                     if (imp.getNDimensions() > 2){
                         IJ.error("Number of image dimensions is larger than 2");

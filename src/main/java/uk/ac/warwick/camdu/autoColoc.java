@@ -316,7 +316,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
 
-            if (fileEntry.getName().contains(match)) {
+            //if (fileEntry.getName().contains(match)) {
                 System.out.println("Opening file: " + fileEntry.getName());
                 String path = fileEntry.getPath();
 
@@ -329,7 +329,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
                 WriteFile(fw, fileEntry.getName(), finalResult);
 
-            }
+            //}
 
 
 
@@ -386,13 +386,13 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
             imps = new ImagePlus[1];
             for (i = 0; i < process.getSeriesCount(); i++) {
                 if(process.getSeriesLabel(i).contains(match)){
-                    System.out.println(process.getSeriesLabel(i));
+                    //System.out.println(process.getSeriesLabel(i));
                     ImporterOptions int_options = new ImporterOptions();
                     int_options.setId(arg);
                     int_options.setSeriesOn(i,true);
                     imps = BF.openImagePlus(int_options);
                     imp = imps[0];
-                    System.out.println(imp.getProperties().toString());
+                    //System.out.println(imp.getProperties().toString());
                     calibration = imp.getCalibration();
                     if (imp.getNDimensions() != 4){
                         IJ.error("Number of image dimensions is different from 4");
