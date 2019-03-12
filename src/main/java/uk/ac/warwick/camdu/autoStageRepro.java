@@ -102,6 +102,9 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
     @Parameter(style="files", label = "select files:")
     private File[] srcDir;
 
+    @Parameter(label = "(Optional) match string for filename:")
+    private String match = "";
+
     private Calibration calibration;
     private static final String COMMA_DELIMITER = ",";
     private static final String NEW_LINE_SEPARATOR = "\n";
@@ -310,23 +313,23 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
 
-
+            if (fileEntry.getName().contains(match)) {
                 System.out.println("Opening file: " + fileEntry.getName());
                 String path = fileEntry.getPath();
 
                 currentFile = readFile(path);
-                if (currentFile == null){
+                if (currentFile == null) {
                     continue;
                 }
                 System.out.println("Processing file: " + fileEntry.getName());
 
-                double[][] finalResult = processing(currentFile,path);
+                double[][] finalResult = processing(currentFile, path);
                 System.out.println("Writing output: ");
 
 
-                WriteFile(fw,fileEntry.getName(),finalResult);
+                WriteFile(fw, fileEntry.getName(), finalResult);
 
-
+            }
 
 
 

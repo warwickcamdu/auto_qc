@@ -115,6 +115,9 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     @Parameter(style="files", label = "select files:")
     private File[] srcDir;
 
+    @Parameter(label = "(Optional) match string for filename:")
+    private String match = "";
+
 
 
 
@@ -365,26 +368,25 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
-
+            if (fileEntry.getName().contains(match)) {
 
                 System.out.println("Opening file: " + fileEntry.getName());
                 String path = fileEntry.getPath();
 
                 currentFile = readFile(path);
-                if (currentFile == null){
+                if (currentFile == null) {
                     continue;
                 }
                 System.out.println("Processing file: " + fileEntry.getName());
 
-                double[][] finalResult = processing(currentFile,path);
+                double[][] finalResult = processing(currentFile, path);
                 System.out.println("Writing output: ");
 
 
-
-                WriteFile(fw,fileEntry.getName(),finalResult);
-
+                WriteFile(fw, fileEntry.getName(), finalResult);
 
 
+            }
 
 
 

@@ -98,6 +98,9 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
     @Parameter(style="files", label = "select files:")
     private File[] srcDir;
 
+    @Parameter(label = "(Optional) match string for filename:")
+    private String match = "";
+
     /**
      * setBeads: only used when running this as a Java program rather than in Fiji.
      * @param beadnum
@@ -309,20 +312,20 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
 
-
+            if (fileEntry.getName().contains(match)) {
                 System.out.println("Opening file: " + fileEntry.getName());
                 String path = fileEntry.getPath();
 
                 currentFile = readFile(path);
                 System.out.println("Processing file: " + fileEntry.getName());
 
-                double[][] finalResult = processing(currentFile,path);
+                double[][] finalResult = processing(currentFile, path);
 
                 System.out.println("Writing output: ");
 
-                WriteFile(fw,fileEntry.getName(),finalResult);
+                WriteFile(fw, fileEntry.getName(), finalResult);
 
-
+            }
 
 
 

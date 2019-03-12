@@ -60,6 +60,9 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     @Parameter(style="files", label = "select files:")
     private File[] srcDir;
 
+    @Parameter(label = "(Optional) match string for filename:")
+    private String match = "";
+
     private Calibration calibration;
 
 
@@ -224,23 +227,25 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
 
+                if (fileEntry.getName().contains(match)){
+                    System.out.println("Opening file: " + fileEntry.getName());
+                    String path = fileEntry.getPath();
 
-                System.out.println("Opening file: " + fileEntry.getName());
-                String path = fileEntry.getPath();
+                    currentFile = readFile(path);
 
-                currentFile = readFile(path);
+                    if (currentFile == null){
+                        continue;
+                    }
 
-                if (currentFile == null){
-                    continue;
+                    System.out.println("Processing file: " + fileEntry.getName());
+
+                    double finalResult = processing(currentFile);
+
+                    System.out.println("Writing output: ");
+
+                    WriteFile(fw,fileEntry.getName(),finalResult);
                 }
 
-                System.out.println("Processing file: " + fileEntry.getName());
-
-                double finalResult = processing(currentFile);
-
-                System.out.println("Writing output: ");
-
-                WriteFile(fw,fileEntry.getName(),finalResult);
 
 
 
