@@ -7,13 +7,19 @@ import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 import loci.formats.FormatException;
+import loci.formats.ImageReader;
 import loci.plugins.BF;
+import loci.plugins.in.ImagePlusReader;
+import loci.plugins.in.ImportProcess;
+import loci.plugins.in.ImporterOptions;
+import loci.plugins.in.ImporterPrompter;
 import net.imagej.ImageJ;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import org.apache.commons.lang3.ObjectUtils;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -23,6 +29,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static ij.WindowManager.*;
@@ -60,10 +68,11 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     @Parameter(style="files", label = "select files:")
     private File[] srcDir;
 
-    @Parameter(label = "(Optional) match string for filename:")
+    @Parameter(label = "(Optional) match string for series:")
     private String match = "";
 
     private Calibration calibration;
+
 
 
 
@@ -216,7 +225,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 //        File selectedDir = new File(srcDir);
         //File selectedDir = srcDir;
-        Img<FloatType> currentFile;
+        List<Img> currentFiles;
 
 
         String selectedDir = srcDir[0].getParent();
@@ -227,24 +236,24 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         for (final File fileEntry : Objects.requireNonNull(srcDir)){
 
 
-                if (fileEntry.getName().contains(match)){
+                //if (fileEntry.getName().contains(match)){
                     System.out.println("Opening file: " + fileEntry.getName());
                     String path = fileEntry.getPath();
 
-                    currentFile = readFile(path);
+                    currentFiles = readFile(path);
 
-                    if (currentFile == null){
+                    if (currentFiles == null){
                         continue;
                     }
 
                     System.out.println("Processing file: " + fileEntry.getName());
 
-                    double finalResult = processing(currentFile);
+                    double[] finalResult = processing(currentFiles);
 
                     System.out.println("Writing output: ");
 
                     WriteFile(fw,fileEntry.getName(),finalResult);
-                }
+                //}
 
 
 
@@ -275,7 +284,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
      * @return imgFinal Img object with a Z-stack from the input file.
      */
 
-    private Img<FloatType> readFile(String arg) {
+    private List<Img> readFile(String arg) {
 
         //  OpenDialog od = new OpenDialog("Open Image File...", arg);
         //  String dir = od.getDirectory();
@@ -286,31 +295,59 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         };
 
         Img<FloatType> imgFinal = ArrayImgs.floats(dimensions);
+        List<Img> toReturn = new ArrayList<Img>();
 
         ImagePlus[] imps;
 
-        ImagePlus imp;
-        try {
+        //ImagePlusReader test = new ImagePlusReader();
 
-            imps = BF.openImagePlus(arg);
-            imp = imps[0];
-            calibration = imp.getCalibration();
-            if (imp.getNDimensions() > 2){
-                IJ.error("Number of image dimensions is larger than 2");
-                return null;
+        ImagePlus imp = new ImagePlus();
+        try {
+            //ImageReader ir = new ImageReader();
+            //ir.setId(arg);
+            ImporterOptions options = new ImporterOptions();
+            options.setId(arg);
+            options.setOpenAllSeries(true);
+            ImportProcess process = new ImportProcess(options);
+            process.execute();
+            options.setOpenAllSeries(false);
+            int i;
+            imps = new ImagePlus[1];
+            for (i = 0; i < process.getSeriesCount(); i++) {
+                if(process.getSeriesLabel(i).contains(match)){
+                    System.out.println(process.getSeriesLabel(i));
+                    ImporterOptions int_options = new ImporterOptions();
+                    int_options.setId(arg);
+                    int_options.setSeriesOn(i,true);
+                    imps = BF.openImagePlus(int_options);
+                    imp = imps[0];
+                    System.out.println(imp.getProperties().toString());
+                    calibration = imp.getCalibration();
+                    if (imp.getNDimensions() > 2){
+                        IJ.error("Number of image dimensions is larger than 2");
+                        return null;
+                    }
+
+                    toReturn.add(ImageJFunctions.convertFloat(imps[0]));
+                }
             }
 
-            imgFinal = ImageJFunctions.convertFloat(imps[0]);
-            // for (ImagePlus imp : imps) imp.show();
-            // We don't need to show them
 
-        } catch (FormatException | IOException exc) {
+            }catch (FormatException | IOException exc) {
 
             IJ.error("Sorry, an error occurred: " + exc.getMessage());
+            imps = new ImagePlus[1];
 
         }
 
-        return imgFinal;
+            calibration = imp.getCalibration();
+
+            // for (ImagePlus imp : imps) imp.show();
+            // We don't need to show them
+
+
+
+        return toReturn;
 
 
 
@@ -325,43 +362,46 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
      * result (i.e. maximum decrease in illumination in the field of view).
 
      *</p>
-     * @param image Img object with the input Z-stack
+     * @param images Img object with the input Z-stack
 
      * @return finalResult double with the maximum decrease in illumination in the field of view
      *
      */
 
-    private double processing(Img image){
+    private double[] processing(List<Img> images){
         //private void processing(Img<FloatType> image){
 
 
-
+        double[] results = new double[images.size()];
         System.out.println("Opened file, processing");
+        int i;
+        for (i=0;i<images.size();i++) {
+            Img image = images.get(i);
+            //ImageJFunctions.show(image);
+            // Crops the image to get middle of the field of view
 
-        //ImageJFunctions.show(image);
-        // Crops the image to get middle of the field of view
+            ImagePlus input = ImageJFunctions.wrap(image, "test");
+            ImageProcessor ip = input.getProcessor();
+            input.trimProcessor();
 
-        ImagePlus input = ImageJFunctions.wrap(image,"test");
-        ImageProcessor ip = input.getProcessor();
-        input.trimProcessor();
-
-        input.setProcessor(null, ip.convertToShort(false));
-        input.setCalibration(calibration);
-        ip.resetMinAndMax();
+            input.setProcessor(null, ip.convertToShort(false));
+            input.setCalibration(calibration);
+            ip.resetMinAndMax();
 
 
+            input.show();
+            fieldIllumination FI = new fieldIllumination(input);
+            double finalResult = parseResult(FI.getStringData());
+            results[i] = finalResult;
 
-        input.show();
-        fieldIllumination FI = new fieldIllumination(input);
-        double finalResult = parseResult(FI.getStringData());
-
-        String[] titles = getImageTitles();
-        for (String title:titles){
-            Window window = getWindow(title);
-            window.dispose();
-            removeWindow(window);
+            String[] titles = getImageTitles();
+            for (String title : titles) {
+                Window window = getWindow(title);
+                window.dispose();
+                removeWindow(window);
+            }
         }
-        return finalResult;
+        return results;
 
     }
 
@@ -409,16 +449,20 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
      * @param filename string with the filename of the image currently being processed
      * @param minIntensity double with the result for the current image
      */
-    private static void WriteFile(FileWriter fileWriter, String filename, double minIntensity){
+    private static void WriteFile(FileWriter fileWriter, String filename, double[] minIntensity){
 
 
 
         try {
             //Write the CSV file header
-            fileWriter.append(filename);
-            fileWriter.append(COMMA_DELIMITER);
-            fileWriter.append(String.valueOf(minIntensity));
-               fileWriter.append(NEW_LINE_SEPARATOR);
+            int i;
+            for (i=0;i<minIntensity.length;i++){
+                fileWriter.append(filename);
+                fileWriter.append(COMMA_DELIMITER);
+                fileWriter.append(String.valueOf(minIntensity[i]));
+                fileWriter.append(NEW_LINE_SEPARATOR);
+            }
+
 
 
         } catch (Exception e) {

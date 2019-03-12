@@ -27,7 +27,13 @@ Usage Instructions:
 autoPSF: expects Z-stacks with sub-resolution fluorescent beads.  
 autoFOV: expects single 2d images of a fluorescent slide (uniform sample).  
 autoColoc: expects 4d images (XYCZT) of larger-than-resolution fluorescent beads.  
-autoStageRepro: expects 3d images (timelapse). Each timepoint should be recorded after translating the stage and moving it back to its original position.  
+autoStageRepro: expects 3d images (timelapse). Each timepoint should be recorded after translating the stage and moving it back to its original position.
+
+If you're using files from multiple folders, outputs will be saved on the folder where the first file is.  
+
+You can operate over multiseries files - the match string parameter tells the program what substring it should look for. For example, if you have a multiseries file and you wan to run autoPSF only over series containing "psf" on their names, use "psf" as the match string parameter.
+
+Note that, for multiseries files (e.g. mvd2), the same calibration is used for all series - do not mix different objectives on the same file!    
 
 When in doubt, consult the [MetroloJ Manual](http://imagejdocu.tudor.lu/lib/exe/fetch.php?media=plugin:analysis:metroloj:metroloj.pdf) for detailed protocols.
 
