@@ -767,9 +767,11 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
      * @return shifts a double[] array with the colour shift values
      */
     private static double[] GetCoal(ImagePlus[] beadStack){
-        microscope[] micro = new microscope[4];
+        int channels = beadStack.length;
+        System.out.println(channels);
+        microscope[] micro = new microscope[channels];
         int i;
-        for (i=0;i<4;i++){
+        for (i=0;i<channels;i++){
             micro[i] = new microscope(beadStack[0].getCalibration(),microscope.WIDEFIELD,500,1.4,0.0,"","");
         }
         coAlignement coal =new coAlignement(beadStack,micro);
