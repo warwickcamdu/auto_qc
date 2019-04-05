@@ -14,7 +14,7 @@
 
 	<groupId>uk.ac.warwick.camdu</groupId>
 	<artifactId>autoqc</artifactId>
-	<version>0.10.0</version>
+	<version>0.11.0</version>
 
 	<name>Auto QC</name>
 	<description>ImageJ plugin for automating quality control tasks for microscopes.</description>
@@ -166,7 +166,7 @@
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>bio-formats_plugins</artifactId>
-			<version>6.0.0</version>
+			<version>6.0.1</version>
 			<exclusions>
 				<exclusion>
 				<groupId>ch.systems.cisd</groupId>
@@ -189,6 +189,23 @@
 			<groupId>sc.fiji</groupId>
 			<artifactId>TrackMate_</artifactId>
 			<version>4.0.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-omero</artifactId>
+			<version>0.8.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>omero</groupId>
+			<artifactId>blitz</artifactId>
+			<exclusions>
+			<exclusion>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-simple</artifactId>
+			</exclusion>
+		</exclusions>
 		</dependency>
 
 

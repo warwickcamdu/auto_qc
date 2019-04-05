@@ -9,10 +9,14 @@ import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.plugin.filter.MaximumFinder;
 import ij.process.ImageProcessor;
+import io.scif.config.SCIFIOConfig;
+import io.scif.services.DatasetIOService;
+
 import loci.formats.FormatException;
 import loci.plugins.BF;
 import loci.plugins.in.ImportProcess;
 import loci.plugins.in.ImporterOptions;
+import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.ops.Ops;
 import net.imagej.ops.special.computer.Computers;
@@ -26,6 +30,10 @@ import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import omero.ServerError;
+import omero.gateway.SecurityContext;
+import omero.gateway.model.ImageData;
+import omero.gateway.model.PixelsData;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -130,7 +138,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * setBeads: only used when running this as a Java program rather than in Fiji.
      * @param beadnum
      */
-    private void setBeads(int beadnum){
+    public void setBeads(int beadnum){
         beads = beadnum;
 
     }
@@ -139,7 +147,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * setBeadSize: only used when running this as a Java program rather than in Fiji.
      * @param bsize
      */
-    private void setBeadSize(double bsize){
+    public void setBeadSize(double bsize){
         beadSize = bsize;
 
     }
@@ -148,7 +156,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * setCorrX: only used when running this as a Java program rather than in Fiji.
      * @param corr_x
      */
-    private void setCorrX(double corr_x){
+    public void setCorrX(double corr_x){
         corr_factor_x = corr_x;
 
     }
@@ -157,7 +165,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * setCorrY: only used when running this as a Java program rather than in Fiji.
      * @param corr_y
      */
-    private void setCorrY(double corr_y){
+    public void setCorrY(double corr_y){
         corr_factor_y = corr_y;
 
     }
@@ -166,7 +174,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * setCorrZ: only used when running this as a Java program rather than in Fiji.
      * @param corr_z
      */
-    private void setCorrZ(double corr_z){
+    public void setCorrZ(double corr_z){
         corr_factor_z = corr_z;
 
     }
@@ -175,7 +183,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * setMinSep: only used when running this as a Java program rather than in Fiji.
      * @param minsep
      */
-    private void setMinSep(int minsep){
+    public void setMinSep(int minsep){
         minSeparation = minsep;
 
     }
@@ -184,7 +192,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * setNoiseTol: only used when running this as a Java program rather than in Fiji.
      * @param ntol
      */
-    private void setNoiseTol(double ntol){
+    public void setNoiseTol(double ntol){
         noiseTol = ntol;
 
     }
@@ -193,8 +201,14 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * setDir: only used when running this as a Java program rather than in Fiji.
      * @param sourceDir
      */
-    private void setDir(File[] sourceDir){
+    public void setDir(File[] sourceDir){
         srcDir = sourceDir;
+
+    }
+
+    public void setOutputDir(File outputDir){
+        srcDir = new File[1];
+        srcDir[0] = outputDir;
 
     }
 
@@ -402,6 +416,49 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         CloseFile(fw);
     }
 
+
+
+
+    public void run_omero(List<Img> list_images, String filename) throws IOException, ServerError {
+
+
+//        createUI();
+
+        ij = new net.imagej.ImageJ();
+        //String srcDir = selectedDir.getAbsolutePath();
+
+        //System.out.println(srcDir);
+
+
+
+        //File[] selectedDir =srcDir;
+
+        String resultPath = srcDir[0]+"/summary_PSF.csv";
+        FileWriter fw = printOutputHeader(resultPath);
+
+
+
+        double[][][] finalResult = processing(list_images, srcDir[0].toString());
+        System.out.println("Writing output: ");
+
+
+        WriteFile(fw, filename, finalResult);
+
+        CloseFile(fw);
+            //}
+
+
+
+        }
+
+
+        // skip irrelevant filenames, do stuff for relevant ones
+
+
+
+
+
+
     /**
      * Reads a string with the path to an image file and returns an Img object.
      * <p>
@@ -413,7 +470,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * @return imgFinal Img object with a Z-stack from the input file.
      */
 
-    private java.util.List<Img> readFile(String arg) {
+    public java.util.List<Img> readFile(String arg) {
 
         //  OpenDialog od = new OpenDialog("Open Image File...", arg);
         //  String dir = od.getDirectory();
