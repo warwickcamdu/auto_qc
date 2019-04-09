@@ -15,10 +15,11 @@ import io.scif.config.SCIFIOConfig;
 import io.scif.img.ImgOpener;
 import io.scif.services.DatasetIOService;
 import loci.formats.FormatException;
+import loci.formats.in.DefaultMetadataOptions;
+import loci.formats.in.MetadataLevel;
 import loci.plugins.BF;
 import loci.plugins.in.ImportProcess;
 import loci.plugins.in.ImporterOptions;
-import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.omero.OMEROLocation;
 import net.imagej.ops.Ops;
@@ -33,6 +34,14 @@ import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
+import ome.formats.OMEROMetadataStoreClient;
+import ome.formats.importer.ImportCandidates;
+import ome.formats.importer.ImportConfig;
+import ome.formats.importer.ImportLibrary;
+import ome.formats.importer.OMEROWrapper;
+import ome.formats.importer.cli.ErrorHandler;
+import ome.formats.importer.cli.LoggingImportMonitor;
+import omero.RString;
 import omero.ServerError;
 import omero.gateway.Gateway;
 import omero.gateway.LoginCredentials;
@@ -40,12 +49,13 @@ import omero.gateway.SecurityContext;
 import omero.gateway.exception.DSAccessException;
 import omero.gateway.exception.DSOutOfServiceException;
 import omero.gateway.facility.BrowseFacility;
+import omero.gateway.facility.DataManagerFacility;
 import omero.gateway.facility.RawDataFacility;
 import omero.gateway.facility.TransferFacility;
-import omero.gateway.model.ExperimenterData;
-import omero.gateway.model.ImageData;
+import omero.gateway.model.*;
 import omero.log.Logger;
 import omero.log.SimpleLogger;
+import omero.model.*;
 import org.scijava.Context;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
@@ -86,6 +96,9 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
     private static final String COMMA_DELIMITER = ",";
     private static final String NEW_LINE_SEPARATOR = "\n";
+    private Gateway gateway;
+    private SecurityContext ctx;
+    private SimpleConnection client = new SimpleConnection();
 
     /**
      * All parameters are the user-defined inputs from Fiji
@@ -128,17 +141,18 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     @Parameter(label = "Output folder:", style = "directory")
     private File outputDir;
 
-    SecurityContext ctx;
 
-    private List<ImageData> connectLoadImages() throws CannotCreateSessionException, PermissionDeniedException, ServerError {
-        SimpleConnection client = new SimpleConnection();
+    private List<ImageData> connectLoadImages(){
+
 
         List<ImageData> images = new ArrayList<>();
         try {
-            ctx = client.connect(host,port,username,passwd);
+
             // Do something e.g. loading user's data.
             // Load the projects/datasets owned by the user currently logged in.
              images = client.loadImagesInDataset(dataset);
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -146,7 +160,16 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
-    private void createUI(List<ImageData> images, SecurityContext ctx) throws IOException, ServerError, CannotCreateSessionException, PermissionDeniedException, URISyntaxException, ExecutionException, DSAccessException, DSOutOfServiceException {
+    private void setup_gateway() throws Exception {
+        LoginCredentials cred = new LoginCredentials(username, passwd, host, port);
+        Logger simpleLogger = new SimpleLogger();
+        gateway = new Gateway(simpleLogger);
+        ExperimenterData user = gateway.connect(cred);
+        ctx = new SecurityContext(user.getGroupId());
+        client.connect(host,port,username,passwd);
+    }
+
+    private void createUI(List<ImageData> images) throws Exception {
 
 
         DefaultListModel<String> l1 = new DefaultListModel<>();
@@ -172,16 +195,60 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         bg.add(fov);
         bg.add(stage);
 
-        myPanel.add(new JLabel("Available files:"));
-        myPanel.add(list);
+        myPanel.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
 
-        myPanel.add(new JLabel("Run this routine:"));
-        myPanel.add(psf);
-        myPanel.add(coloc);
-        myPanel.add(fov);
-        myPanel.add(stage);
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 0;
+        c.gridy = 0;
+        myPanel.add(new JLabel("Available files:"),c);
 
-        myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.Y_AXIS));
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 0;
+        c.gridy = 1;
+        c.ipady = 150;
+        c.gridheight = 5;
+        myPanel.add(list,c);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 0;
+        c.ipady = 0;
+        c.gridheight = 1;
+
+
+        myPanel.add(new JLabel("Run this routine:"),c);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 1;
+        c.ipady = 0;
+        myPanel.add(psf,c);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 2;
+        c.ipady = 0;
+        myPanel.add(coloc,c);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 3;
+        c.ipady = 0;
+        myPanel.add(fov,c);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 4;
+        c.ipady = 0;
+        myPanel.add(stage,c);
+
+        //myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.X_AXIS));
+
+
+
+
+
 
         int result = JOptionPane.showConfirmDialog(
                 null, myPanel, "autoQC_OMERO", JOptionPane.OK_CANCEL_OPTION);
@@ -190,6 +257,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         if (result  == JOptionPane.OK_OPTION) {
             int[] selected_images = list.getSelectedIndices();
             List<ImageData> imgdatas = getSelectedImages(selected_images, images);
+
 
             List<Img> imgs;
 
@@ -200,6 +268,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
                 /* here is where the new UI stuff goes*/
                 runpsf.setOutputDir(outputDir);
                 runpsf.run_omero(imgs, imgdatas.get(0).getName());
+                save_results(imgdatas,outputDir);
             }
             if (coloc.isSelected()){
                 System.out.println("coloc");
@@ -218,20 +287,93 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
+
+    private Dataset createDataset(List<ImageData> imgs) throws DSAccessException, DSOutOfServiceException, ExecutionException {
+        DataManagerFacility dm = gateway.getFacility(DataManagerFacility.class);
+        System.out.println(imgs.get(0));
+        System.out.println(imgs.get(0).getDatasets());
+        System.out.println(imgs.get(0).getDatasets().iterator());
+        System.out.println(imgs.get(0).getDatasets().iterator().next());
+        DatasetData original = (DatasetData) imgs.get(0).getDatasets().iterator().next();
+        String name = original.getName() + "_autoPSF_beads";
+        ProjectData proj = client.get_project(original.getId());
+
+
+        DatasetI ds = new DatasetI();
+        ds.setName(omero.rtypes.rstring(name));
+        ProjectDatasetLink link = new ProjectDatasetLinkI();
+        link.setChild(ds);
+        link.setParent(new ProjectI(proj.getId(), false));
+        link = (ProjectDatasetLink) dm.saveAndReturnObject(ctx, link);
+
+        return ds;
+    }
+
+    private void save_results(List<ImageData> imgs, File dir) throws ExecutionException, DSAccessException, DSOutOfServiceException {
+        Dataset ds = createDataset(imgs);
+        List<String> paths = null;
+        File[] fileNames = dir.listFiles();
+
+        for(File file : fileNames){
+            if (file.getName().endsWith("tif")){
+                paths.add(file.getAbsolutePath());
+            }
+
+        }
+        String[] allpaths = paths.toArray(new String[0]);
+        ImportConfig config = new ome.formats.importer.ImportConfig();
+
+        config.email.set("");
+        config.sendFiles.set(true);
+        config.sendReport.set(false);
+        config.contOnError.set(false);
+        config.debug.set(false);
+
+        config.hostname.set("localhost");
+        config.port.set(4064);
+        config.username.set("root");
+        config.password.set("omero");
+
+// the imported image will go into 'orphaned images' unless
+// you specify a particular existing dataset like this:
+// config.targetClass.set("omero.model.Dataset");
+// config.targetId.set(1L);
+
+        OMEROMetadataStoreClient store;
+        try {
+            store = config.createStore();
+            store.logVersionInfo(config.getIniVersionNumber());
+            OMEROWrapper reader = new OMEROWrapper(config);
+            ImportLibrary library = new ImportLibrary(store, reader);
+
+            ErrorHandler handler = new ErrorHandler(config);
+            library.addObserver(new LoggingImportMonitor());
+
+            ImportCandidates candidates = new ImportCandidates(reader, allpaths, handler);
+            reader.setMetadataOptions(new DefaultMetadataOptions(MetadataLevel.ALL));
+            library.importCandidates(config, candidates);
+
+            store.logout();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
+
+        return;
+    }
+
+
     public List<Img> downloadImage(final omero.client client, final long imageID, autoPSF runpsf)
             throws omero.ServerError, IOException, DSOutOfServiceException, ExecutionException, DSAccessException {
-        LoginCredentials cred = new LoginCredentials(username, passwd, host, port);
-        Logger simpleLogger = new SimpleLogger();
-        Gateway gateway = new Gateway(simpleLogger);
-        ExperimenterData user = gateway.connect(cred);
-        SecurityContext ctx = new SecurityContext(user.getGroupId());
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         ImageData image = browse.getImage(ctx, imageID);
         RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
         TransferFacility tf = gateway.getFacility(TransferFacility.class);
         tf.downloadImage(ctx,outputDir.toString(), imageID);
         String imgName = image.getName();
-        gateway.disconnect();
 
         return runpsf.readFile(outputDir+"/"+imgName);
     }
@@ -285,37 +427,24 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 //        createUI();
 
         ij = new net.imagej.ImageJ();
-        List<ImageData> images = null;
         try {
-            images = connectLoadImages();
-        } catch (CannotCreateSessionException e) {
+            setup_gateway();
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (PermissionDeniedException e) {
-            e.printStackTrace();
-        } catch (ServerError serverError) {
-            serverError.printStackTrace();
         }
+        List<ImageData> images = null;
+
+        images = connectLoadImages();
+
         try {
-            createUI(images, ctx);
+            createUI(images);
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (ServerError serverError) {
-            serverError.printStackTrace();
-        } catch (PermissionDeniedException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        } catch (CannotCreateSessionException e) {
-            e.printStackTrace();
-        } catch (DSOutOfServiceException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (DSAccessException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-
+    gateway.disconnect();
     }
 
 

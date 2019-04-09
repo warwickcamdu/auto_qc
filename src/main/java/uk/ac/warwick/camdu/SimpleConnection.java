@@ -11,8 +11,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import omero.api.ThumbnailStorePrx;
+import omero.gateway.exception.DSAccessException;
+import omero.gateway.exception.DSOutOfServiceException;
 import omero.gateway.model.*;
 import omero.sys.ParametersI;
 
@@ -98,6 +101,13 @@ public class SimpleConnection {
         Iterator<ImageData> j = images.iterator();
         List<ImageData> imgs = IteratorUtils.toList(j);
         return imgs;
+    }
+
+    public ProjectData get_project(long datasetId) throws DSAccessException, DSOutOfServiceException, ExecutionException {
+        BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
+        DatasetData dsd = browse.getDatasets(ctx, Arrays.asList(datasetId)).iterator().next();
+        ProjectData proj = (ProjectData) dsd.getProjects().iterator().next();
+        return proj;
     }
 
     /** Loads the image with the id 1.*/
