@@ -7,10 +7,7 @@
  */
 package uk.ac.warwick.camdu;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import omero.api.ThumbnailStorePrx;
@@ -103,11 +100,32 @@ public class SimpleConnection {
         return imgs;
     }
 
-    public ProjectData get_project(long datasetId) throws DSAccessException, DSOutOfServiceException, ExecutionException {
+    public long get_project(DatasetData dsd, Gateway gateway, SecurityContext ctx) throws DSAccessException, DSOutOfServiceException, ExecutionException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
-        DatasetData dsd = browse.getDatasets(ctx, Arrays.asList(datasetId)).iterator().next();
-        ProjectData proj = (ProjectData) dsd.getProjects().iterator().next();
-        return proj;
+        Collection<ProjectData> projects = browse.getProjects(ctx);
+        Iterator<ProjectData> i = projects.iterator();
+        ProjectData project;
+        DatasetData dat;
+        long projId = -1;
+        while (i.hasNext()) {
+            project = i.next();
+            boolean isThere = false;
+            Set<DatasetData> ds = project.getDatasets();
+            Iterator<DatasetData> id = ds.iterator();
+            while (id.hasNext()){
+                dat = id.next();
+                if (dat.getId() == dsd.getId()){
+                    isThere= true;
+                    projId = project.getId();
+                    System.out.println("project ID:");
+                    System.out.println(projId);
+                    return projId;
+                }
+            }
+        }
+    System.out.println("project ID:");
+    System.out.println(projId);
+    return projId;
     }
 
     /** Loads the image with the id 1.*/

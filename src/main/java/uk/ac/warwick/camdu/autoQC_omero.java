@@ -4,36 +4,12 @@ package uk.ac.warwick.camdu;
 
 import Glacier2.CannotCreateSessionException;
 import Glacier2.PermissionDeniedException;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.gui.Roi;
-import ij.io.FileSaver;
-import ij.measure.Calibration;
-import ij.plugin.filter.MaximumFinder;
-import ij.process.ImageProcessor;
-import io.scif.config.SCIFIOConfig;
-import io.scif.img.ImgOpener;
 import io.scif.services.DatasetIOService;
-import loci.formats.FormatException;
 import loci.formats.in.DefaultMetadataOptions;
 import loci.formats.in.MetadataLevel;
-import loci.plugins.BF;
-import loci.plugins.in.ImportProcess;
-import loci.plugins.in.ImporterOptions;
 import net.imagej.ImageJ;
-import net.imagej.omero.OMEROLocation;
-import net.imagej.ops.Ops;
-import net.imagej.ops.special.computer.Computers;
-import net.imagej.ops.special.computer.UnaryComputerOp;
-import net.imglib2.FinalDimensions;
-import net.imglib2.FinalInterval;
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.real.FloatType;
 import ome.formats.OMEROMetadataStoreClient;
 import ome.formats.importer.ImportCandidates;
 import ome.formats.importer.ImportConfig;
@@ -41,8 +17,8 @@ import ome.formats.importer.ImportLibrary;
 import ome.formats.importer.OMEROWrapper;
 import ome.formats.importer.cli.ErrorHandler;
 import ome.formats.importer.cli.LoggingImportMonitor;
-import omero.RString;
 import omero.ServerError;
+import omero.api.RawFileStorePrx;
 import omero.gateway.Gateway;
 import omero.gateway.LoginCredentials;
 import omero.gateway.SecurityContext;
@@ -52,11 +28,13 @@ import omero.gateway.facility.BrowseFacility;
 import omero.gateway.facility.DataManagerFacility;
 import omero.gateway.facility.RawDataFacility;
 import omero.gateway.facility.TransferFacility;
-import omero.gateway.model.*;
+import omero.gateway.model.DatasetData;
+import omero.gateway.model.ExperimenterData;
+import omero.gateway.model.ImageData;
 import omero.log.Logger;
 import omero.log.SimpleLogger;
 import omero.model.*;
-import org.scijava.Context;
+import omero.model.enums.ChecksumAlgorithmSHA1160;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -64,17 +42,14 @@ import org.scijava.plugin.Plugin;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-
-import static ij.WindowManager.*;
-import static java.lang.Math.ceil;
-import static java.lang.Math.round;
 
 /**
  *
@@ -99,6 +74,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     private Gateway gateway;
     private SecurityContext ctx;
     private SimpleConnection client = new SimpleConnection();
+    ExperimenterData user;
 
     /**
      * All parameters are the user-defined inputs from Fiji
@@ -164,7 +140,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         LoginCredentials cred = new LoginCredentials(username, passwd, host, port);
         Logger simpleLogger = new SimpleLogger();
         gateway = new Gateway(simpleLogger);
-        ExperimenterData user = gateway.connect(cred);
+        user = gateway.connect(cred);
         ctx = new SecurityContext(user.getGroupId());
         client.connect(host,port,username,passwd);
     }
@@ -257,7 +233,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         if (result  == JOptionPane.OK_OPTION) {
             int[] selected_images = list.getSelectedIndices();
             List<ImageData> imgdatas = getSelectedImages(selected_images, images);
-
+            List<String> filenames = getFilenames(imgdatas);
 
             List<Img> imgs;
 
@@ -267,7 +243,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
                 imgs = retrieveImages(imgdatas, runpsf);
                 /* here is where the new UI stuff goes*/
                 runpsf.setOutputDir(outputDir);
-                runpsf.run_omero(imgs, imgdatas.get(0).getName());
+                runpsf.run_omero(imgs, imgdatas.get(0).getName(), filenames);
                 save_results(imgdatas,outputDir);
             }
             if (coloc.isSelected()){
@@ -288,34 +264,55 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
 
 
-    private Dataset createDataset(List<ImageData> imgs) throws DSAccessException, DSOutOfServiceException, ExecutionException {
-        DataManagerFacility dm = gateway.getFacility(DataManagerFacility.class);
-        System.out.println(imgs.get(0));
-        System.out.println(imgs.get(0).getDatasets());
-        System.out.println(imgs.get(0).getDatasets().iterator());
-        System.out.println(imgs.get(0).getDatasets().iterator().next());
-        DatasetData original = (DatasetData) imgs.get(0).getDatasets().iterator().next();
-        String name = original.getName() + "_autoPSF_beads";
-        ProjectData proj = client.get_project(original.getId());
+    private List<String> getFilenames(List<ImageData> imgs){
+        List<String> result = new ArrayList<>();
+        for (ImageData img:imgs ) {
+            result.add(img.getName());
+        }
+        return result;
+    }
 
+
+
+    private long createDataset(List<ImageData> imgs) throws DSAccessException, DSOutOfServiceException, ExecutionException {
+        DataManagerFacility dm = gateway.getFacility(DataManagerFacility.class);
+        BrowseFacility bw = gateway.getFacility(BrowseFacility.class);
+
+
+        DatasetData original = bw.getDatasets(ctx, Arrays.asList(dataset)).iterator().next();
+
+
+
+
+        String name = original.getName() + "_autoPSF_results";
+        System.out.println(original);
+        long proj = client.get_project(original, gateway, ctx);
+        System.out.println(proj);
 
         DatasetI ds = new DatasetI();
         ds.setName(omero.rtypes.rstring(name));
         ProjectDatasetLink link = new ProjectDatasetLinkI();
         link.setChild(ds);
-        link.setParent(new ProjectI(proj.getId(), false));
+        link.setParent(new ProjectI(proj, false));
         link = (ProjectDatasetLink) dm.saveAndReturnObject(ctx, link);
-
-        return ds;
+        long dsid = link.getChild().getId().getValue();
+//        Project test = link.getParent();
+//        ds = (DatasetI) dm.saveAndReturnObject(ctx, ds);
+//        link = (ProjectDatasetLink) dm.saveAndReturnObject(ctx, link);
+        //System.out.println(ds.getId().getValue());
+//        System.out.println(test.getId().getValue());
+        return dsid;
     }
 
-    private void save_results(List<ImageData> imgs, File dir) throws ExecutionException, DSAccessException, DSOutOfServiceException {
-        Dataset ds = createDataset(imgs);
-        List<String> paths = null;
-        File[] fileNames = dir.listFiles();
+    private void save_results(List<ImageData> imgs, File dir) throws ExecutionException, DSAccessException, DSOutOfServiceException, ServerError {
+        long dsid = createDataset(imgs);
+        List<String> paths = new ArrayList<>();
+        File theDir = new File(dir.getAbsolutePath()+"_results");
+        File[] fileNames = theDir.listFiles();
 
         for(File file : fileNames){
             if (file.getName().endsWith("tif")){
+                System.out.println(file.getAbsolutePath());
                 paths.add(file.getAbsolutePath());
             }
 
@@ -329,10 +326,13 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         config.contOnError.set(false);
         config.debug.set(false);
 
-        config.hostname.set("localhost");
-        config.port.set(4064);
-        config.username.set("root");
-        config.password.set("omero");
+        config.hostname.set(host);
+        config.port.set(port);
+        config.username.set(username);
+        config.password.set(passwd);
+        config.targetClass.set("omero.model.Dataset");
+        config.targetId.set(dsid);
+        System.out.println(dsid);
 
 // the imported image will go into 'orphaned images' unless
 // you specify a particular existing dataset like this:
@@ -359,7 +359,67 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
             e.printStackTrace();
         }
 
+        File csv = new File(dir.getAbsolutePath()+File.separator+"summary_PSF.csv");
+        String name = "summary_PSF.csv";
+        String absolutePath = dir.getAbsolutePath()+File.separator+"summary_PSF.csv";
+        String path = dir.getAbsolutePath()+File.separator;
 
+        int INC = 262144;
+        DataManagerFacility dm = gateway.getFacility(DataManagerFacility.class);
+
+        OriginalFile originalFile = new OriginalFileI();
+        originalFile.setName(omero.rtypes.rstring(name));
+        originalFile.setPath(omero.rtypes.rstring(path));
+        originalFile.setSize(omero.rtypes.rlong(csv.length()));
+        final ChecksumAlgorithm checksumAlgorithm = new ChecksumAlgorithmI();
+        checksumAlgorithm.setValue(omero.rtypes.rstring(ChecksumAlgorithmSHA1160.value));
+        originalFile.setHasher(checksumAlgorithm);
+        originalFile.setMimetype(omero.rtypes.rstring("application/octet-stream")); // or "application/octet-stream"
+//Now we save the originalFile object
+        originalFile = (OriginalFile) dm.saveAndReturnObject(ctx, originalFile);
+
+//Initialize the service to load the raw data
+        RawFileStorePrx rawFileStore = gateway.getRawFileService(ctx);
+
+        long pos = 0;
+        int rlen;
+        byte[] buf = new byte[INC];
+        ByteBuffer bbuf;
+//Open file and read stream
+        try (FileInputStream stream = new FileInputStream(csv)) {
+            rawFileStore.setFileId(originalFile.getId().getValue());
+            while ((rlen = stream.read(buf)) > 0) {
+                rawFileStore.write(buf, pos, rlen);
+                pos += rlen;
+                bbuf = ByteBuffer.wrap(buf);
+                bbuf.limit(rlen);
+            }
+            originalFile = rawFileStore.save();
+        } catch (ServerError serverError) {
+            serverError.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            rawFileStore.close();
+        }
+//now we have an original File in DB and raw data uploaded.
+//We now need to link the Original file to the image using
+//the File annotation object. That's the way to do it.
+        FileAnnotation fa = new FileAnnotationI();
+        fa.setFile(originalFile);
+        //fa.setDescription(omero.rtypes.rstring(description)); // The description set above e.g. PointsModel
+        //fa.setNs(omero.rtypes.rstring(NAME_SPACE_TO_SET)); // The name space you have set to identify the file annotation.
+
+//save the file annotation.
+        fa = (FileAnnotation) dm.saveAndReturnObject(ctx, fa);
+
+//now link the image and the annotation
+        DatasetAnnotationLink link = new DatasetAnnotationLinkI();
+        link.setChild(fa);
+        link.setParent(new DatasetI(dsid, false));
+//save the link back to the server.
+        link = (DatasetAnnotationLink) dm.saveAndReturnObject(ctx, link);
+// o attach to a Dataset use DatasetAnnotationLink;
 
 
         return;
