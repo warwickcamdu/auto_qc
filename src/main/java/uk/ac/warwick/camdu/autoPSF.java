@@ -456,11 +456,11 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 }
                 System.out.println("Processing file: " + fileEntry.getName());
 
-                double[][][] finalResult = processing(currentFiles, path);
+                double[][][] finalResult = processing(currentFiles, path, fw,fileEntry.getName() );
                 System.out.println("Writing output: ");
 
 
-                WriteFile(fw, fileEntry.getName(), finalResult);
+                //WriteFile(fw, fileEntry.getName(), finalResult);
 
 
             //}
@@ -507,11 +507,11 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
 
-        double[][][] finalResult = processing_omero(list_images, srcDir[0].toString(), filenames);
+        double[][][] finalResult = processing_omero(list_images, srcDir[0].toString(), filenames,fw);
         System.out.println("Writing output: ");
 
 
-        WriteFile(fw, filename, finalResult);
+       // WriteFile(fw, filename, finalResult);
 
         CloseFile(fw);
             //}
@@ -625,12 +625,11 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * @param path String with the path to the original image file that is being processed
      * @return finalResults double[][] matrix with all the resolution results for all the beads in this image
      */
-    private double[][][] processing(List<Img> images, String path){
+    private double[][][] processing(List<Img> images, String path, FileWriter fw, String name){
 
 
 
     //private void processing(Img<FloatType> image){
-
         double[][][] toReturn = new double[images.size()][][];
         File theDir = new File(path+"_beads");
         System.out.println("entering create dir");
@@ -881,6 +880,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 removeWindow(window);
             }
             toReturn[j] = finalResults;
+            WriteThisFile(fw,name,finalResults);
         }
 
 
@@ -890,7 +890,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     }
 
 
-    private double[][][] processing_omero(List<Img> images, String path, List<String> filenames){
+    private double[][][] processing_omero(List<Img> images, String path, List<String> filenames, FileWriter fw){
         //private void processing(Img<FloatType> image){
 
         double[][][] toReturn = new double[images.size()][][];
@@ -1147,6 +1147,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 removeWindow(window);
             }
             toReturn[j] = finalResults;
+            WriteThisFile(fw,name,finalResults);
         }
 
 
@@ -1195,6 +1196,39 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 e.printStackTrace();
 
             }
+
+    }
+
+
+    private static void WriteThisFile(FileWriter fileWriter, String filename, double[][] BeadResArray){
+
+
+        try {
+            int i;
+
+                //Add a new line separator after the header
+                fileWriter.append(NEW_LINE_SEPARATOR);
+                for (double[] doubles : BeadResArray) {
+                    fileWriter.append(filename);
+                    fileWriter.append(COMMA_DELIMITER);
+                    fileWriter.append(String.valueOf(doubles[0]));
+                    fileWriter.append(COMMA_DELIMITER);
+                    fileWriter.append(String.valueOf(doubles[1]));
+                    fileWriter.append(COMMA_DELIMITER);
+                    fileWriter.append(String.valueOf(doubles[2]));
+                    fileWriter.append(COMMA_DELIMITER);
+                    fileWriter.append(String.valueOf(doubles[3]));
+                    fileWriter.append(NEW_LINE_SEPARATOR);
+                }
+
+
+
+        } catch (Exception e) {
+
+            System.out.println("Error in CsvFileWriter !!!");
+            e.printStackTrace();
+
+        }
 
     }
 

@@ -256,6 +256,12 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
             }
             if (fov.isSelected()){
                 System.out.println("fov");
+                autoFOV runFOV = new autoFOV();
+                imgs = retrieveImagesFOV(imgdatas, runFOV);
+                /* here is where the new UI stuff goes*/
+                runFOV.setOutputDir(outputDir);
+                runFOV.run_omero(imgs, imgdatas.get(0).getName(), filenames);
+                saveResults(imgdatas,outputDir, "FOV");
             }
             if (stage.isSelected()){
                 System.out.println("stage");
@@ -356,27 +362,27 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 // you specify a particular existing dataset like this:
 // config.targetClass.set("omero.model.Dataset");
 // config.targetId.set(1L);
+        if (paths.size()>0) {
+            OMEROMetadataStoreClient store;
+            try {
+                store = config.createStore();
+                store.logVersionInfo(config.getIniVersionNumber());
+                OMEROWrapper reader = new OMEROWrapper(config);
+                ImportLibrary library = new ImportLibrary(store, reader);
 
-        OMEROMetadataStoreClient store;
-        try {
-            store = config.createStore();
-            store.logVersionInfo(config.getIniVersionNumber());
-            OMEROWrapper reader = new OMEROWrapper(config);
-            ImportLibrary library = new ImportLibrary(store, reader);
+                ErrorHandler handler = new ErrorHandler(config);
+                library.addObserver(new LoggingImportMonitor());
 
-            ErrorHandler handler = new ErrorHandler(config);
-            library.addObserver(new LoggingImportMonitor());
+                ImportCandidates candidates = new ImportCandidates(reader, allpaths, handler);
+                reader.setMetadataOptions(new DefaultMetadataOptions(MetadataLevel.ALL));
+                library.importCandidates(config, candidates);
 
-            ImportCandidates candidates = new ImportCandidates(reader, allpaths, handler);
-            reader.setMetadataOptions(new DefaultMetadataOptions(MetadataLevel.ALL));
-            library.importCandidates(config, candidates);
+                store.logout();
 
-            store.logout();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-
 
         for (String csvfile: csvpaths) {
 
@@ -473,6 +479,19 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
+    private List<Img> downloadImageFOV(final long imageID, autoFOV runFOV)
+            throws DSOutOfServiceException, ExecutionException, DSAccessException {
+        BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
+        ImageData image = browse.getImage(ctx, imageID);
+        RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
+        TransferFacility tf = gateway.getFacility(TransferFacility.class);
+        tf.downloadImage(ctx,outputDir.toString(), imageID);
+        String imgName = image.getName();
+
+        return runFOV.readFile(outputDir+"/"+imgName);
+    }
+
+
     private static String credentials(final omero.client client) {
         return "server=" + getHost(client) + //
                 "&port=" + client.getProperty("omero.port") + //
@@ -508,6 +527,16 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
         for (ImageData img:imgs){
             result.add(downloadImageColoc(img.getId(), runcoloc).get(0));
+        }
+
+        return result;
+    }
+
+    private List<Img> retrieveImagesFOV(List<ImageData> imgs, autoFOV runFOV) throws CannotCreateSessionException, PermissionDeniedException, ServerError, IOException, ExecutionException, DSAccessException, DSOutOfServiceException {
+        List<Img> result = new ArrayList<>();
+
+        for (ImageData img:imgs){
+            result.add(downloadImageFOV(img.getId(), runFOV).get(0));
         }
 
         return result;

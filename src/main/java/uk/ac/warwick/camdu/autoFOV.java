@@ -7,19 +7,15 @@ import ij.ImagePlus;
 import ij.measure.Calibration;
 import ij.process.ImageProcessor;
 import loci.formats.FormatException;
-import loci.formats.ImageReader;
 import loci.plugins.BF;
-import loci.plugins.in.ImagePlusReader;
 import loci.plugins.in.ImportProcess;
 import loci.plugins.in.ImporterOptions;
-import loci.plugins.in.ImporterPrompter;
 import net.imagej.ImageJ;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
-import org.apache.commons.lang3.ObjectUtils;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -29,6 +25,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -86,7 +84,11 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
     }
 
+    public void setOutputDir(File outputDir){
+        srcDir = new File[1];
+        srcDir[0] = outputDir;
 
+    }
 
 
     /**
@@ -166,6 +168,9 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
     }
+
+
+
 
 
     /**
@@ -248,11 +253,11 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
                     System.out.println("Processing file: " + fileEntry.getName());
 
-                    double[] finalResult = processing(currentFiles);
+                    double[] finalResult = processing(currentFiles, fw,fileEntry.getName() );
 
                     System.out.println("Writing output: ");
 
-                    WriteFile(fw,fileEntry.getName(),finalResult);
+                    //WriteFile(fw,fileEntry.getName(),finalResult);
                 //}
 
 
@@ -273,6 +278,50 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     }
 
 
+    private void createDirectory(File dir){
+
+        if (!dir.exists()) {
+            dir.mkdirs();
+
+        }
+    }
+
+
+
+
+    public String run_omero(List<Img> list_images, String filename, List<String> filenames){
+
+
+
+        ij = new net.imagej.ImageJ();
+        //String srcDir = selectedDir.getAbsolutePath();
+
+        //System.out.println(srcDir);
+
+
+
+        //File[] selectedDir =srcDir;
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd.HHmmss");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        createDirectory(new File(srcDir[0]+"_FOVresults/"));
+        String resultPath = srcDir[0]+"_FOVresults/"+ sdf.format(timestamp)+"summary_FOV.csv";
+        FileWriter fw = printOutputHeader(resultPath);
+
+
+
+        double[] finalResult = processing_omero(list_images, fw, filenames);
+        System.out.println("Writing output: ");
+
+
+        //WriteFile(fw, filename, finalResult);
+
+        CloseFile(fw);
+        //}
+
+        return sdf.format(timestamp)+"summary_FOV.csv";
+
+    }
+
     /**
      * Reads a string with the path to an image file and returns an Img object.
      * <p>
@@ -284,7 +333,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
      * @return imgFinal Img object with a Z-stack from the input file.
      */
 
-    private List<Img> readFile(String arg) {
+    public List<Img> readFile(String arg) {
 
         //  OpenDialog od = new OpenDialog("Open Image File...", arg);
         //  String dir = od.getDirectory();
@@ -368,7 +417,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
      *
      */
 
-    private double[] processing(List<Img> images){
+    private double[] processing(List<Img> images, FileWriter fw, String name){
         //private void processing(Img<FloatType> image){
 
 
@@ -376,6 +425,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         System.out.println("Opened file, processing");
         int i;
         for (i=0;i<images.size();i++) {
+
             Img image = images.get(i);
             //ImageJFunctions.show(image);
             // Crops the image to get middle of the field of view
@@ -393,6 +443,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
             fieldIllumination FI = new fieldIllumination(input);
             double finalResult = parseResult(FI.getStringData());
             results[i] = finalResult;
+            WriteThisFile(fw, name, finalResult);
 
             String[] titles = getImageTitles();
             for (String title : titles) {
@@ -400,10 +451,57 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
                 window.dispose();
                 removeWindow(window);
             }
+
         }
         return results;
 
     }
+
+
+
+    private double[] processing_omero(List<Img> images, FileWriter fw, List<String> filenames){
+        //private void processing(Img<FloatType> image){
+
+
+        double[] results = new double[images.size()];
+        System.out.println("Opened file, processing");
+        int i;
+        for (i=0;i<images.size();i++) {
+            String name = filenames.get(i);
+            Img image = images.get(i);
+            //ImageJFunctions.show(image);
+            // Crops the image to get middle of the field of view
+
+            ImagePlus input = ImageJFunctions.wrap(image, "test");
+            ImageProcessor ip = input.getProcessor();
+            input.trimProcessor();
+
+            input.setProcessor(null, ip.convertToShort(false));
+            input.setCalibration(calibration);
+            ip.resetMinAndMax();
+
+
+            input.show();
+            fieldIllumination FI = new fieldIllumination(input);
+            double finalResult = parseResult(FI.getStringData());
+            results[i] = finalResult;
+            WriteThisFile(fw, name, finalResult);
+
+            String[] titles = getImageTitles();
+            for (String title : titles) {
+                Window window = getWindow(title);
+                window.dispose();
+                removeWindow(window);
+            }
+
+        }
+        return results;
+
+    }
+
+
+
+
 
 
     /**
@@ -462,6 +560,31 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
                 fileWriter.append(String.valueOf(minIntensity[i]));
                 fileWriter.append(NEW_LINE_SEPARATOR);
             }
+
+
+
+        } catch (Exception e) {
+
+            System.out.println("Error in CsvFileWriter !!!");
+            e.printStackTrace();
+
+        }
+
+    }
+
+    private static void WriteThisFile(FileWriter fileWriter, String filename, double minIntensity){
+
+
+
+        try {
+            //Write the CSV file header
+            int i;
+
+                fileWriter.append(filename);
+                fileWriter.append(COMMA_DELIMITER);
+                fileWriter.append(String.valueOf(minIntensity));
+                fileWriter.append(NEW_LINE_SEPARATOR);
+
 
 
 
