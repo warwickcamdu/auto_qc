@@ -69,8 +69,6 @@ import java.util.concurrent.ExecutionException;
 public class autoQC_omero<T extends RealType<T>> extends Component implements Command {
 
 
-    private static final String COMMA_DELIMITER = ",";
-    private static final String NEW_LINE_SEPARATOR = "\n";
     private Gateway gateway;
     private SecurityContext ctx;
     private SimpleConnection client = new SimpleConnection();
@@ -234,20 +232,27 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
             int[] selected_images = list.getSelectedIndices();
             List<ImageData> imgdatas = getSelectedImages(selected_images, images);
             List<String> filenames = getFilenames(imgdatas);
+            createDirectory(outputDir);
 
             List<Img> imgs;
 
             if (psf.isSelected()){
                 System.out.println("psf");
-                autoPSF<T> runpsf = new autoPSF();
-                imgs = retrieveImages(imgdatas, runpsf);
+                autoPSF runpsf = new autoPSF();
+                imgs = retrieveImagesPSF(imgdatas, runpsf);
                 /* here is where the new UI stuff goes*/
                 runpsf.setOutputDir(outputDir);
                 runpsf.run_omero(imgs, imgdatas.get(0).getName(), filenames);
-                save_results(imgdatas,outputDir);
+                saveResults(imgdatas,outputDir, "PSF");
             }
             if (coloc.isSelected()){
                 System.out.println("coloc");
+                autoColoc runcoloc = new autoColoc();
+                imgs = retrieveImagesColoc(imgdatas, runcoloc);
+                /* here is where the new UI stuff goes*/
+                runcoloc.setOutputDir(outputDir);
+                runcoloc.run_omero(imgs, imgdatas.get(0).getName(), filenames);
+                saveResults(imgdatas,outputDir, "coloc");
             }
             if (fov.isSelected()){
                 System.out.println("fov");
@@ -263,6 +268,13 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
+    private void createDirectory(File dir){
+
+        if (!dir.exists()) {
+            dir.mkdirs();
+
+        }
+    }
 
     private List<String> getFilenames(List<ImageData> imgs){
         List<String> result = new ArrayList<>();
@@ -274,7 +286,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
 
 
-    private long createDataset(List<ImageData> imgs) throws DSAccessException, DSOutOfServiceException, ExecutionException {
+    private long createDataset(List<ImageData> imgs, String routine) throws DSAccessException, DSOutOfServiceException, ExecutionException {
         DataManagerFacility dm = gateway.getFacility(DataManagerFacility.class);
         BrowseFacility bw = gateway.getFacility(BrowseFacility.class);
 
@@ -284,7 +296,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
 
 
-        String name = original.getName() + "_autoPSF_results";
+        String name = original.getName() + "_auto"+routine+"_results";
         System.out.println(original);
         long proj = client.get_project(original, gateway, ctx);
         System.out.println(proj);
@@ -295,25 +307,31 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         link.setChild(ds);
         link.setParent(new ProjectI(proj, false));
         link = (ProjectDatasetLink) dm.saveAndReturnObject(ctx, link);
-        long dsid = link.getChild().getId().getValue();
-//        Project test = link.getParent();
+        //        Project test = link.getParent();
 //        ds = (DatasetI) dm.saveAndReturnObject(ctx, ds);
 //        link = (ProjectDatasetLink) dm.saveAndReturnObject(ctx, link);
         //System.out.println(ds.getId().getValue());
 //        System.out.println(test.getId().getValue());
-        return dsid;
+        return link.getChild().getId().getValue();
     }
 
-    private void save_results(List<ImageData> imgs, File dir) throws ExecutionException, DSAccessException, DSOutOfServiceException, ServerError {
-        long dsid = createDataset(imgs);
+
+
+
+    private void saveResults(List<ImageData> imgs, File dir, String routine) throws ExecutionException, DSAccessException, DSOutOfServiceException, ServerError {
+        long dsid = createDataset(imgs, routine);
         List<String> paths = new ArrayList<>();
-        File theDir = new File(dir.getAbsolutePath()+"_results");
+        List<String> csvpaths = new ArrayList<>();
+        File theDir = new File(dir.getAbsolutePath()+"_"+ routine + "results");
         File[] fileNames = theDir.listFiles();
 
         for(File file : fileNames){
             if (file.getName().endsWith("tif")){
                 System.out.println(file.getAbsolutePath());
                 paths.add(file.getAbsolutePath());
+            }
+            if (file.getName().endsWith("csv")){
+                csvpaths.add(file.getName());
             }
 
         }
@@ -359,75 +377,78 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
             e.printStackTrace();
         }
 
-        File csv = new File(dir.getAbsolutePath()+File.separator+"summary_PSF.csv");
-        String name = "summary_PSF.csv";
-        String absolutePath = dir.getAbsolutePath()+File.separator+"summary_PSF.csv";
-        String path = dir.getAbsolutePath()+File.separator;
 
-        int INC = 262144;
-        DataManagerFacility dm = gateway.getFacility(DataManagerFacility.class);
+        for (String csvfile: csvpaths) {
 
-        OriginalFile originalFile = new OriginalFileI();
-        originalFile.setName(omero.rtypes.rstring(name));
-        originalFile.setPath(omero.rtypes.rstring(path));
-        originalFile.setSize(omero.rtypes.rlong(csv.length()));
-        final ChecksumAlgorithm checksumAlgorithm = new ChecksumAlgorithmI();
-        checksumAlgorithm.setValue(omero.rtypes.rstring(ChecksumAlgorithmSHA1160.value));
-        originalFile.setHasher(checksumAlgorithm);
-        originalFile.setMimetype(omero.rtypes.rstring("application/octet-stream")); // or "application/octet-stream"
+            File csv = new File(theDir.getAbsolutePath() + File.separator + csvfile);
+            String path = theDir.getAbsolutePath() + File.separator;
+
+            int INC = 262144;
+            DataManagerFacility dm = gateway.getFacility(DataManagerFacility.class);
+
+            OriginalFile originalFile = new OriginalFileI();
+            originalFile.setName(omero.rtypes.rstring(csvfile));
+            originalFile.setPath(omero.rtypes.rstring(path));
+            originalFile.setSize(omero.rtypes.rlong(csv.length()));
+            final ChecksumAlgorithm checksumAlgorithm = new ChecksumAlgorithmI();
+            checksumAlgorithm.setValue(omero.rtypes.rstring(ChecksumAlgorithmSHA1160.value));
+            originalFile.setHasher(checksumAlgorithm);
+            originalFile.setMimetype(omero.rtypes.rstring("application/octet-stream")); // or "application/octet-stream"
 //Now we save the originalFile object
-        originalFile = (OriginalFile) dm.saveAndReturnObject(ctx, originalFile);
+            originalFile = (OriginalFile) dm.saveAndReturnObject(ctx, originalFile);
 
 //Initialize the service to load the raw data
-        RawFileStorePrx rawFileStore = gateway.getRawFileService(ctx);
+            RawFileStorePrx rawFileStore = gateway.getRawFileService(ctx);
 
-        long pos = 0;
-        int rlen;
-        byte[] buf = new byte[INC];
-        ByteBuffer bbuf;
+            long pos = 0;
+            int rlen;
+            byte[] buf = new byte[INC];
+            ByteBuffer bbuf;
 //Open file and read stream
-        try (FileInputStream stream = new FileInputStream(csv)) {
-            rawFileStore.setFileId(originalFile.getId().getValue());
-            while ((rlen = stream.read(buf)) > 0) {
-                rawFileStore.write(buf, pos, rlen);
-                pos += rlen;
-                bbuf = ByteBuffer.wrap(buf);
-                bbuf.limit(rlen);
+            try (FileInputStream stream = new FileInputStream(csv)) {
+                rawFileStore.setFileId(originalFile.getId().getValue());
+                while ((rlen = stream.read(buf)) > 0) {
+                    rawFileStore.write(buf, pos, rlen);
+                    pos += rlen;
+                    bbuf = ByteBuffer.wrap(buf);
+                    bbuf.limit(rlen);
+                }
+                originalFile = rawFileStore.save();
+            } catch (ServerError | IOException serverError) {
+                serverError.printStackTrace();
+            } finally {
+                rawFileStore.close();
             }
-            originalFile = rawFileStore.save();
-        } catch (ServerError serverError) {
-            serverError.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            rawFileStore.close();
-        }
 //now we have an original File in DB and raw data uploaded.
 //We now need to link the Original file to the image using
 //the File annotation object. That's the way to do it.
-        FileAnnotation fa = new FileAnnotationI();
-        fa.setFile(originalFile);
-        //fa.setDescription(omero.rtypes.rstring(description)); // The description set above e.g. PointsModel
-        //fa.setNs(omero.rtypes.rstring(NAME_SPACE_TO_SET)); // The name space you have set to identify the file annotation.
+            FileAnnotation fa = new FileAnnotationI();
+            fa.setFile(originalFile);
+            //fa.setDescription(omero.rtypes.rstring(description)); // The description set above e.g. PointsModel
+            //fa.setNs(omero.rtypes.rstring(NAME_SPACE_TO_SET)); // The name space you have set to identify the file annotation.
 
 //save the file annotation.
-        fa = (FileAnnotation) dm.saveAndReturnObject(ctx, fa);
+            fa = (FileAnnotation) dm.saveAndReturnObject(ctx, fa);
 
 //now link the image and the annotation
-        DatasetAnnotationLink link = new DatasetAnnotationLinkI();
-        link.setChild(fa);
-        link.setParent(new DatasetI(dsid, false));
+            DatasetAnnotationLink link = new DatasetAnnotationLinkI();
+            link.setChild(fa);
+            link.setParent(new DatasetI(dsid, false));
 //save the link back to the server.
-        link = (DatasetAnnotationLink) dm.saveAndReturnObject(ctx, link);
+            link = (DatasetAnnotationLink) dm.saveAndReturnObject(ctx, link);
 // o attach to a Dataset use DatasetAnnotationLink;
+        }
 
-
-        return;
     }
 
 
-    public List<Img> downloadImage(final omero.client client, final long imageID, autoPSF runpsf)
-            throws omero.ServerError, IOException, DSOutOfServiceException, ExecutionException, DSAccessException {
+
+
+
+
+
+    private List<Img> downloadImagePSF(final long imageID, autoPSF runpsf)
+            throws DSOutOfServiceException, ExecutionException, DSAccessException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         ImageData image = browse.getImage(ctx, imageID);
         RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
@@ -436,6 +457,19 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         String imgName = image.getName();
 
         return runpsf.readFile(outputDir+"/"+imgName);
+    }
+
+
+    private List<Img> downloadImageColoc(final long imageID, autoColoc runcoloc)
+            throws DSOutOfServiceException, ExecutionException, DSAccessException {
+        BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
+        ImageData image = browse.getImage(ctx, imageID);
+        RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
+        TransferFacility tf = gateway.getFacility(TransferFacility.class);
+        tf.downloadImage(ctx,outputDir.toString(), imageID);
+        String imgName = image.getName();
+
+        return runcoloc.readFile(outputDir+"/"+imgName);
     }
 
 
@@ -458,17 +492,26 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
-    private List<Img> retrieveImages(List<ImageData> imgs, autoPSF runpsf) throws URISyntaxException, CannotCreateSessionException, PermissionDeniedException, ServerError, IOException, ExecutionException, DSAccessException, DSOutOfServiceException {
+    private List<Img> retrieveImagesPSF(List<ImageData> imgs, autoPSF runpsf) throws URISyntaxException, CannotCreateSessionException, PermissionDeniedException, ServerError, IOException, ExecutionException, DSAccessException, DSOutOfServiceException {
         List<Img> result = new ArrayList<>();
-        omero.client b = new omero.client(host, port);
-        b.createSession(username, passwd);
+
         for (ImageData img:imgs){
-            result.add(downloadImage(b, img.getId(), runpsf).get(0));
+            result.add(downloadImagePSF(img.getId(), runpsf).get(0));
         }
 
     return result;
     }
 
+
+    private List<Img> retrieveImagesColoc(List<ImageData> imgs, autoColoc runcoloc) throws CannotCreateSessionException, PermissionDeniedException, ServerError, IOException, ExecutionException, DSAccessException, DSOutOfServiceException {
+        List<Img> result = new ArrayList<>();
+
+        for (ImageData img:imgs){
+            result.add(downloadImageColoc(img.getId(), runcoloc).get(0));
+        }
+
+        return result;
+    }
     
     private List<ImageData> getSelectedImages(int[] selections, List<ImageData> images){
 

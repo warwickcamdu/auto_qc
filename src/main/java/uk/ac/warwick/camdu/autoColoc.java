@@ -35,6 +35,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -147,6 +149,12 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
     }
 
+    public void setOutputDir(File outputDir){
+        srcDir = new File[1];
+        srcDir[0] = outputDir;
+
+    }
+
 
 /**
  * creates a new FileWriter and writes a header to it. Returns the created FileWriter
@@ -248,6 +256,52 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
     }
 
 
+    private void createUI_omero(){
+
+        JTextField beadField = new JTextField("1",5);
+        JTextField beadSizeField = new JTextField("1",5);
+        JTextField sepField = new JTextField("30",5);
+        JTextField noiseTolField = new JTextField("100",5);
+
+
+
+        JPanel myPanel = new JPanel();
+
+
+
+        myPanel.add(new JLabel("Number of beads:"));
+        myPanel.add(beadField);
+
+        myPanel.add(new JLabel("Bead size (um):"));
+        myPanel.add(beadSizeField);
+
+        myPanel.add(new JLabel("Minimum bead separation (px):"));
+        myPanel.add(sepField);
+
+        myPanel.add(new JLabel("Noise threshold:"));
+        myPanel.add(noiseTolField);
+
+
+
+
+        myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.Y_AXIS));
+
+        JOptionPane.showConfirmDialog(
+                null, myPanel, "autoColoc", JOptionPane.OK_CANCEL_OPTION);
+
+
+        setBeads(Integer.parseInt(beadField.getText()));
+        setBeadSize(Double.parseDouble(beadSizeField.getText()));
+        setMinSep(Integer.parseInt(sepField.getText()));
+        setNoiseTol(Double.parseDouble(noiseTolField.getText()));
+
+
+
+    }
+
+
+
+
 
     /**
      * Defines what happens when the button for selecting files is clicked.
@@ -306,10 +360,11 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
 
         //File selectedDir = srcDir;
-
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd.HHmmss");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         List<Img> currentFiles;
-        String selectedDir = srcDir[0].getParent();
-        String resultPath = selectedDir + File.separator + "summary_coloc.csv";
+        String selectedDir = srcDir[0].getAbsolutePath();
+        String resultPath = selectedDir + File.separator + sdf.format(timestamp)+"summary_coloc.csv";
         FileWriter fw = printOutputHeader(resultPath);
 
 
@@ -344,6 +399,49 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
     }
 
+    private void createDirectory(File dir){
+
+        if (!dir.exists()) {
+            dir.mkdirs();
+
+        }
+    }
+
+    public String run_omero(List<Img> list_images, String filename, List<String> filenames){
+
+
+        createUI_omero();
+
+        ij = new net.imagej.ImageJ();
+        //String srcDir = selectedDir.getAbsolutePath();
+
+        //System.out.println(srcDir);
+
+
+
+        //File[] selectedDir =srcDir;
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd.HHmmss");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        createDirectory(new File(srcDir[0]+"_colocresults/"));
+
+        String resultPath = srcDir[0]+"_colocresults"+"/"+ sdf.format(timestamp)+"summary_coloc.csv";
+        FileWriter fw = printOutputHeader(resultPath);
+
+
+
+        double[][][] finalResult = processing_omero(list_images, srcDir[0].toString(), filenames);
+        System.out.println("Writing output: ");
+
+
+        WriteFile(fw, filename, finalResult);
+
+        CloseFile(fw);
+        //}
+
+    return sdf.format(timestamp)+"summary_coloc.csv";
+
+    }
+
 
     /**
      * Reads a string with the path to an image file and returns an Img object.
@@ -355,7 +453,7 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
      * @param arg String with the path to file to be read.
      * @return imgFinal Img object with a Z-stack from the input file.
      */
-    private java.util.List<Img> readFile(String arg) {
+    public java.util.List<Img> readFile(String arg) {
 
         //  OpenDialog od = new OpenDialog("Open Image File...", arg);
         //  String dir = od.getDirectory();
@@ -665,6 +763,258 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
                 FileSaver fs = new FileSaver(IPcropped);
                 fs.saveAsTiff(path + "_beads" + File.separator + "bead_" + i + ".tif");
+
+                // crops stack around the specified coordinates
+
+                // calls GetRes to extract the resolution form the PSFs
+                ImagePlus[] input = ChannelSplitter.split(IPcropped);
+                double[] colorShifts = GetCoal(input);
+
+                // multiply by the correction factor
+                /*double xRes = qcMetrics[0] * corr_factor_x;
+                double yRes = qcMetrics[1] * corr_factor_y;
+                double zRes = qcMetrics[2] * corr_factor_z;*/
+                finalResults[i][0] = i;
+                finalResults[i][1] = colorShifts[0];
+                finalResults[i][2] = colorShifts[1];
+                finalResults[i][3] = colorShifts[2];
+
+
+            }
+
+            String[] titles = getImageTitles();
+            for (String title : titles) {
+                Window window = getWindow(title);
+                window.dispose();
+                removeWindow(window);
+            }
+            toReturn[j] = finalResults;
+        }
+
+        return toReturn;
+
+    }
+
+
+
+    private double[][][] processing_omero(List<Img> images, String path, List<String> filenames){
+        //private void processing(Img<FloatType> image){
+
+        double[][][] toReturn = new double[images.size()][][];
+        File theDir = new File(path+"_colocresults");
+        System.out.println("entering create dir");
+// if the directory does not exist, create it
+        if (!theDir.exists()) {
+            System.out.println("creating directory: " + theDir.getName());
+            boolean result = false;
+
+            try{
+                theDir.mkdir();
+                result = true;
+            }
+            catch(SecurityException se){
+                //handle it
+            }
+            if(result) {
+                System.out.println("DIR created");
+            }
+        }
+
+
+        IJ.run("Set Measurements...", "min centroid integrated redirect=None decimal=3");
+        System.out.println("Opened file, processing");
+
+        //ImageJFunctions.show(image);
+        // Crops the image to get middle of the field of view
+
+        int j;
+
+
+        for (j=0;j<images.size();j++) {
+            Img image = images.get(j);
+            String name = filenames.get(j);
+            long minx, miny, maxx, maxy;
+            minx = 0;
+            miny = 0;
+
+            maxx = 300;
+            maxy = 300;
+
+
+            if (image.dimension(0) > 300) {
+                minx = image.dimension(0) / 2 - 150;
+            }
+            if (image.dimension(1) > 300) {
+                miny = image.dimension(1) / 2 - 150;
+            }
+
+            FinalInterval interval = FinalInterval.createMinSize(minx, miny, 0, 0, maxx, maxy, image.dimension(2), image.dimension(3));
+
+
+            RandomAccessibleInterval cropped;
+            cropped = ij.op().transform().crop(image, interval, true);
+            //        ImageJFunctions.show(cropped);
+            int[] projected_dimensions = new int[cropped.numDimensions() - 1];
+
+            int dim = 3;
+            int d;
+            for (d = 0; d < cropped.numDimensions(); ++d) {
+                if (d != dim) projected_dimensions[d] = (int) cropped.dimension(d);
+            }
+
+            Img<FloatType> proj = ij.op().create().img(
+                    new FinalDimensions(projected_dimensions), new FloatType());
+
+            UnaryComputerOp maxOp = Computers.unary(ij.op(), Ops.Stats.Max.class, RealType.class, Iterable.class);
+
+            Img<T> projection = (Img<T>) ij.op().transform().project(proj, cropped, maxOp, 3);
+
+            interval = FinalInterval.createMinSize(0, 0, 0, proj.dimension(0), proj.dimension(1), 1);
+            RandomAccessibleInterval finalcrop;
+            finalcrop = ij.op().transform().crop(proj, interval, true);
+            ImageJFunctions.show(finalcrop);
+            ImagePlus imp = IJ.getImage();
+            MaximumFinder mf = new MaximumFinder();
+            Polygon pol = mf.getMaxima(imp.getProcessor(), (int) noiseTol, true);
+
+            // detect beads and measure for intensity and x/y coords
+            //IJ.run("Find Maxima...", "noise="+noiseTol+" output=[Point Selection] exclude");
+            //ImagePlus imp = IJ.getImage();
+            //IJ.saveAsTiff(imp,path+"_beads"+File.separator+"allbeads"+".tif");
+            // Gets coordinates of ROIs
+
+            //Roi test = imp.getRoi();
+            //FloatPolygon floatPolygon = test.getFloatPolygon();
+            float[][] resultsTable = new float[pol.npoints][3];
+
+            // loops over ROIs and get pixel Vvlue at their coordinate.
+            for (int i = 0; i < pol.npoints; i++) {
+
+                float intx = pol.xpoints[i];
+                float inty = pol.ypoints[i];
+                final RandomAccess<FloatType> r = proj.randomAccess();
+                r.setPosition((int) intx, 0);
+                r.setPosition((int) inty, 1);
+                FloatType pixel = r.get();
+
+                resultsTable[i][0] = intx;
+                resultsTable[i][1] = inty;
+                resultsTable[i][2] = pixel.get();
+
+            }
+
+
+            // Sorts the Pixel coordinates by the intensity value.
+            //java.util.Arrays.sort(resultsTable, Comparator.comparingDouble(a -> a[2]));
+            java.util.Arrays.sort(resultsTable, (v1, v2) -> Float.compare(v2[2], v1[2]));
+
+            int countSpots = 0;
+            int firstPosition = 0;
+            double[] goodX = new double[beads];
+            double[] goodY = new double[beads];
+
+
+            // selects the selected number of pixels based on the specified criteria
+            while (countSpots < beads && firstPosition < resultsTable.length) {
+
+                float x1 = resultsTable[firstPosition][0];
+
+                float y1 = resultsTable[firstPosition][1];
+
+                int nextPosition = firstPosition + 1;
+                boolean valid = true;
+
+                while (valid && nextPosition < resultsTable.length) {
+
+                    float x2 = resultsTable[nextPosition][0];
+                    float y2 = resultsTable[nextPosition][1];
+
+                    double dist_sq = Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
+
+                    if (x2 != x1 && y2 != y1 && dist_sq < Math.pow(minSeparation, 2)) {
+
+                        valid = false;
+
+                    }
+
+                    nextPosition++;
+
+
+                }
+
+
+                if (valid) {
+                    Roi beadROI = new Roi(resultsTable[firstPosition][0] - 15, resultsTable[firstPosition][1] - 15, 30, 30);
+                    ImageProcessor ip = imp.getProcessor();
+                    //ip.setRoi(beadROI);
+                    ip.setValue(10000);
+                    ip.draw(beadROI);
+                    goodX[countSpots] = resultsTable[firstPosition][0];
+                    goodY[countSpots] = resultsTable[firstPosition][1];
+                    countSpots++;
+
+                }
+
+                firstPosition++;
+
+            }
+
+            IJ.saveAsTiff(imp,path+"_colocresults"+File.separator+name+"_allbeads"+".tif");
+
+            double[][] finalResults = new double[beads][4];
+
+
+            long cropSize = 35;
+            String unit = calibration.getUnit();
+            if (unit.equals("micron") || unit.equals("um")) {
+                double pixSize = calibration.pixelHeight;
+                cropSize = round((3 * beadSize) / pixSize);
+            }
+            if (unit.equals("nm")) {
+                double pixSize = calibration.pixelHeight;
+                cropSize = round((3 * beadSize) / (pixSize / 1000));
+            }
+            if (cropSize < 35) {
+                cropSize = 35;
+            }
+
+
+            //ij.ui().showUI();
+            // loops over selected pixels and crops out the PSFs
+            for (int i = 0; i < goodX.length; i++) {
+
+                minx = 0;
+                miny = 0;
+                maxx = cropSize;
+                maxy = cropSize;
+                if (goodX[i] > cropSize / 2 && goodX[i] < cropped.dimension(0) - cropSize) {
+                    minx = (long) ceil(goodX[i] - cropSize / 2);
+                }
+                if (goodY[i] > cropSize / 2 && goodY[i] < cropped.dimension(1) - cropSize) {
+                    miny = (long) ceil(goodY[i] - cropSize / 2);
+                }
+
+                if (goodX[i] >= cropped.dimension(0) - cropSize) {
+                    minx = cropped.dimension(0) - cropSize;
+                }
+
+                if (goodY[i] >= cropped.dimension(1) - cropSize) {
+                    miny = cropped.dimension(1) - cropSize;
+                }
+                interval = FinalInterval.createMinSize(minx, miny, 0, 0, maxx, maxy, cropped.dimension(2), cropped.dimension(3));
+
+
+                RandomAccessibleInterval newcropped = ij.op().transform().crop(cropped, interval, true);
+                ImagePlus IPcropped = ImageJFunctions.wrapFloat(newcropped, "test");
+                IPcropped.setDimensions((int) newcropped.dimension(2), (int) newcropped.dimension(3), 1);
+                IPcropped.setOpenAsHyperStack(true);
+                ImageProcessor ip = IPcropped.getProcessor();
+                ip.resetMinAndMax();
+
+                IPcropped.setCalibration(calibration);
+
+                FileSaver fs = new FileSaver(IPcropped);
+                fs.saveAsTiff(path+"_colocresults"+File.separator+name+"_bead_"+i+".tif");
 
                 // crops stack around the specified coordinates
 

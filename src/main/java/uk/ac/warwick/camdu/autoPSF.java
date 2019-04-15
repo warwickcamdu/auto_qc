@@ -36,6 +36,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -432,11 +434,12 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         //System.out.println(srcDir);
 
-
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd.HHmmss");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
         //File[] selectedDir =srcDir;
         String selectedDir = srcDir[0].getParent();
-        String resultPath = selectedDir + File.separator + "summary_PSF.csv";
+        String resultPath = selectedDir + File.separator + sdf.format(timestamp)+"summary_PSF.csv";
         FileWriter fw = printOutputHeader(resultPath);
         List<Img> currentFiles;
 
@@ -473,9 +476,17 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     }
 
 
+    private void createDirectory(File dir){
+
+        if (!dir.exists()) {
+            dir.mkdirs();
+
+        }
+    }
 
 
-    public void run_omero(List<Img> list_images, String filename, List<String> filenames) throws IOException, ServerError {
+
+    public String run_omero(List<Img> list_images, String filename, List<String> filenames){
 
 
         createUI_omero();
@@ -488,8 +499,10 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
         //File[] selectedDir =srcDir;
-
-        String resultPath = srcDir[0]+"/summary_PSF.csv";
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd.HHmmss");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        createDirectory(new File(srcDir[0]+"_PSFresults/"));
+        String resultPath = srcDir[0]+"_PSFresults/"+ sdf.format(timestamp)+"summary_PSF.csv";
         FileWriter fw = printOutputHeader(resultPath);
 
 
@@ -503,7 +516,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         CloseFile(fw);
             //}
 
-
+        return sdf.format(timestamp)+"summary_PSF.csv";
 
         }
 
@@ -613,6 +626,9 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * @return finalResults double[][] matrix with all the resolution results for all the beads in this image
      */
     private double[][][] processing(List<Img> images, String path){
+
+
+
     //private void processing(Img<FloatType> image){
 
         double[][][] toReturn = new double[images.size()][][];
@@ -878,7 +894,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         //private void processing(Img<FloatType> image){
 
         double[][][] toReturn = new double[images.size()][][];
-        File theDir = new File(path+"_results");
+        File theDir = new File(path+"_PSFresults");
         System.out.println("entering create dir");
 // if the directory does not exist, create it
         if (!theDir.exists()) {
@@ -1043,7 +1059,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             }
 
 
-            IJ.saveAsTiff(imp,path+"_results"+File.separator+name+"_allbeads"+".tif");
+            IJ.saveAsTiff(imp,path+"_PSFresults"+File.separator+name+"_allbeads"+".tif");
             double[][] finalResults  = new double[beads][4];
 
 
@@ -1104,7 +1120,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
                 FileSaver fs = new FileSaver(IPcropped);
-                fs.saveAsTiff(path+"_results"+File.separator+name+"_bead_"+i+".tif");
+                fs.saveAsTiff(path+"_PSFresults"+File.separator+name+"_bead_"+i+".tif");
                 // crops stack around the specified coordinates
 
                 // calls GetRes to extract the resolution form the PSFs
