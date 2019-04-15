@@ -35,7 +35,11 @@ You can operate over multiseries files - the match string parameter tells the pr
 
 Note that, for multiseries files (e.g. mvd2), the same calibration is used for all series - do not mix different objectives on the same file!    
 
-When in doubt, consult the [MetroloJ Manual](http://imagejdocu.tudor.lu/lib/exe/fetch.php?media=plugin:analysis:metroloj:metroloj.pdf) for detailed protocols.
+When in doubt, consult the [MetroloJ Manual](http://imagejdocu.tudor.lu/lib/exe/fetch.php?media=plugin:analysis:metroloj:metroloj.pdf) for detailed protocols.   
+
+For OMERO stuff, you need the [OMERO Plugin for ImageJ](https://www.openmicroscopy.org/omero/downloads/). 
+
+
 
 
 
