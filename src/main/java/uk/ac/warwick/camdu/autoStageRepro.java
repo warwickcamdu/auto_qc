@@ -35,6 +35,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -154,6 +156,12 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
     }
 
+    public void setOutputDir(File outputDir){
+        srcDir = new File[1];
+        srcDir[0] = outputDir;
+
+    }
+
 
     /**
      * creates a new FileWriter and writes a header to it. Returns the created FileWriter
@@ -246,6 +254,48 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
     }
 
+
+
+    private void createUI_omero(){
+
+        JTextField beadField = new JTextField("1",5);
+        JTextField beadSizeField = new JTextField("1",5);
+        JTextField sepField = new JTextField("30",5);
+        JTextField noiseTolField = new JTextField("100",5);
+
+
+
+        JPanel myPanel = new JPanel();
+
+
+
+        myPanel.add(new JLabel("Number of beads:"));
+        myPanel.add(beadField);
+
+        myPanel.add(new JLabel("Bead size (um):"));
+        myPanel.add(beadSizeField);
+
+        myPanel.add(new JLabel("Minimum bead separation (px):"));
+        myPanel.add(sepField);
+
+        myPanel.add(new JLabel("Noise Tolerance:"));
+        myPanel.add(noiseTolField);
+
+        myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.Y_AXIS));
+
+        JOptionPane.showConfirmDialog(
+                null, myPanel, "autoStageRepro", JOptionPane.OK_CANCEL_OPTION);
+
+
+        setBeads(Integer.parseInt(beadField.getText()));
+        setBeadSize(Double.parseDouble(beadSizeField.getText()));
+        setMinSep(Integer.parseInt(sepField.getText()));
+        setNoiseTol(Double.parseDouble(noiseTolField.getText()));
+
+
+
+    }
+
     /**
      * Defines what happens when the button for selecting files is clicked.
      * <p>
@@ -278,6 +328,18 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
         setDir(selectedDir);
     }
+
+
+
+
+    private void createDirectory(File dir){
+
+        if (!dir.exists()) {
+            dir.mkdirs();
+
+        }
+    }
+
 
 
 
@@ -324,7 +386,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
                 }
                 System.out.println("Processing file: " + fileEntry.getName());
 
-                double[][][] finalResult = processing(currentFiles, path);
+                double[][][] finalResult = processing(currentFiles, path,fw,fileEntry.getName() );
                 System.out.println("Writing output: ");
 
 
@@ -343,6 +405,42 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
     }
 
 
+    public String run_omero(List<Img> list_images, String filename, List<String> filenames) {
+
+
+        createUI_omero();
+
+        ij = new net.imagej.ImageJ();
+        //String srcDir = selectedDir.getAbsolutePath();
+
+        //System.out.println(srcDir);
+
+
+
+        //File[] selectedDir =srcDir;
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd.HHmmss");
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        createDirectory(new File(srcDir[0]+"_stageresults/"));
+        String resultPath = srcDir[0]+"_stageresults/"+ sdf.format(timestamp)+"summary_stage.csv";
+        FileWriter fw = printOutputHeader(resultPath);
+
+
+
+        double[][][] finalResult = processing_omero(list_images, srcDir[0].toString(), filenames,fw);
+        System.out.println("Writing output: ");
+
+
+        // WriteFile(fw, filename, finalResult);
+
+        CloseFile(fw);
+        //}
+
+        return sdf.format(timestamp)+"summary_stage.csv";
+
+
+    }
+
+
 
     /**
      * Reads a string with the path to an image file and returns an Img object.
@@ -355,7 +453,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
      * @return imgFinal Img object with a Z-stack from the input file.
      */
 
-    private java.util.List<Img> readFile(String arg) {
+    public java.util.List<Img> readFile(String arg) {
 
         //  OpenDialog od = new OpenDialog("Open Image File...", arg);
         //  String dir = od.getDirectory();
@@ -542,7 +640,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
      * @return finalResults double[][] matrix with all the displacement results for all the beads in this image
      *
      */
-    private double[][][] processing(List<Img> images, String path){
+    private double[][][] processing(List<Img> images, String path, FileWriter fw, String name){
         //private void processing(Img<FloatType> image){
 
         double[][][] toReturn = new double[images.size()][][];
@@ -768,10 +866,248 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
                 removeWindow(window);
             }
             toReturn[j] = finalResults;
+            WriteThisFile(fw,name,finalResults);
         }
         return toReturn;
 
     }
+
+
+    private double[][][] processing_omero(List<Img> images, String path, List<String> filenames, FileWriter fw){
+        //private void processing(Img<FloatType> image){
+
+        double[][][] toReturn = new double[images.size()][][];
+        File theDir = new File(path+"_stageresults");
+        System.out.println("entering create dir");
+// if the directory does not exist, create it
+        if (!theDir.exists()) {
+            System.out.println("creating directory: " + theDir.getName());
+            boolean result = false;
+
+            try{
+                theDir.mkdir();
+                result = true;
+            }
+            catch(SecurityException se){
+                //handle it
+            }
+            if(result) {
+                System.out.println("DIR created");
+            }
+        }
+
+
+        //IJ.run("Set Measurements...", "min centroid integrated redirect=None decimal=3");
+        System.out.println("Opened file, processing");
+
+
+
+        int j;
+
+
+        for (j=0;j<images.size();j++) {
+            Img image = images.get(j);
+            String name = filenames.get(j);
+            //ImageJFunctions.show(image);
+            // Crops the image to get middle of the field of view
+
+            FinalInterval interval = FinalInterval.createMinSize(0, 0, 0, image.dimension(0), image.dimension(1), image.dimension(2));
+//        if (image.dimension(0) > 300 && image.dimension(1) > 300){
+//            System.out.println(image.dimension(0));
+//            interval = FinalInterval.createMinSize(image.dimension(0)/2-150,image.dimension(1)/2-150,0,300,300,image.dimension(2));
+//        }
+
+
+            RandomAccessibleInterval cropped;
+            cropped = ij.op().transform().crop(image, interval, true);
+//        ImageJFunctions.show(cropped);
+
+            interval = FinalInterval.createMinSize(0, 0, 0, cropped.dimension(0), cropped.dimension(1), 1);
+            RandomAccessibleInterval finalcrop;
+            finalcrop = ij.op().transform().crop(cropped, interval, true);
+            ImageJFunctions.show(finalcrop);
+            ImagePlus imp = IJ.getImage();
+            MaximumFinder mf = new MaximumFinder();
+            Polygon pol = mf.getMaxima(imp.getProcessor(), (int) noiseTol, true);
+
+            // detect beads and measure for intensity and x/y coords
+            //IJ.run("Find Maxima...", "noise="+noiseTol+" output=[Point Selection] exclude");
+            //ImagePlus imp = IJ.getImage();
+            //IJ.saveAsTiff(imp,path+"_beads"+File.separator+"allbeads"+".tif");
+            // Gets coordinates of ROIs
+
+            //Roi test = imp.getRoi();
+            //FloatPolygon floatPolygon = test.getFloatPolygon();
+
+            float[][] resultsTable = new float[pol.npoints][3];
+
+            // loops over ROIs and get pixel Vvlue at their coordinate.
+            for (int i = 0; i < pol.npoints; i++) {
+
+                float intx = pol.xpoints[i];
+                float inty = pol.ypoints[i];
+                final RandomAccess<FloatType> r = finalcrop.randomAccess();
+                r.setPosition((int) intx, 0);
+                r.setPosition((int) inty, 1);
+                FloatType pixel = r.get();
+
+                resultsTable[i][0] = intx;
+                resultsTable[i][1] = inty;
+                resultsTable[i][2] = pixel.get();
+
+            }
+
+
+            // Sorts the Pixel coordinates by the intensity value.
+            //java.util.Arrays.sort(resultsTable, Comparator.comparingDouble(a -> a[2]));
+            //We're now sorting for highest intensities
+            java.util.Arrays.sort(resultsTable, (v1, v2) -> Float.compare(v2[2], v1[2]));
+
+            int countSpots = 0;
+            int firstPosition = 0;
+            double[] goodX = new double[beads];
+            double[] goodY = new double[beads];
+
+
+            // selects the selected number of pixels based on the specified criteria
+            while (countSpots < beads && firstPosition < resultsTable.length) {
+
+                float x1 = resultsTable[firstPosition][0];
+
+                float y1 = resultsTable[firstPosition][1];
+
+                int nextPosition = firstPosition + 1;
+                boolean valid = true;
+
+                while (valid && nextPosition < resultsTable.length) {
+
+                    float x2 = resultsTable[nextPosition][0];
+                    float y2 = resultsTable[nextPosition][1];
+
+                    double dist_sq = Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2);
+
+                    if (x2 != x1 && y2 != y1 && dist_sq < Math.pow(minSeparation, 2)) {
+
+                        valid = false;
+
+                    }
+
+                    nextPosition++;
+
+
+                }
+
+
+                if (valid) {
+                    Roi beadROI = new Roi(resultsTable[firstPosition][0] - 15, resultsTable[firstPosition][1] - 15, 30, 30);
+                    ImageProcessor ip = imp.getProcessor();
+                    //ip.setRoi(beadROI);
+                    ip.setValue(10000);
+                    ip.draw(beadROI);
+                    goodX[countSpots] = resultsTable[firstPosition][0];
+                    goodY[countSpots] = resultsTable[firstPosition][1];
+                    countSpots++;
+
+                }
+
+                firstPosition++;
+
+            }
+
+            IJ.saveAsTiff(imp, path+"_stageresults"+File.separator+name+"_allbeads"+".tif");
+
+
+            double[][] finalResults = new double[beads][4];
+
+
+            long cropSize = 30;
+            String unit = calibration.getUnit();
+            if (unit.equals("micron") || unit.equals("um")) {
+                double pixSize = calibration.pixelHeight;
+                cropSize = round((3 * beadSize) / pixSize);
+            }
+            if (unit.equals("nm")) {
+                double pixSize = calibration.pixelHeight;
+                cropSize = round((3 * beadSize) / (pixSize / 1000));
+            }
+            if (cropSize < 30) {
+                cropSize = 30;
+            }
+
+
+            //ij.ui().showUI();
+            // loops over selected pixels and crops out the PSFs
+            for (int i = 0; i < goodX.length; i++) {
+
+                long minx, miny, maxx, maxy;
+                minx = 0;
+                miny = 0;
+                maxx = cropSize;
+                maxy = cropSize;
+                if (goodX[i] > cropSize / 2 && goodX[i] < cropped.dimension(0) - cropSize) {
+                    minx = (long) ceil(goodX[i] - cropSize / 2);
+                }
+                if (goodY[i] > cropSize / 2 && goodY[i] < cropped.dimension(1) - cropSize) {
+                    miny = (long) ceil(goodY[i] - cropSize / 2);
+                }
+
+                if (goodX[i] >= cropped.dimension(0) - cropSize) {
+                    minx = cropped.dimension(0) - cropSize;
+                }
+
+                if (goodY[i] >= cropped.dimension(1) - cropSize) {
+                    miny = cropped.dimension(1) - cropSize;
+                }
+
+                interval = FinalInterval.createMinSize(minx, miny, 0, maxx, maxy, cropped.dimension(2));
+
+
+                RandomAccessibleInterval newcropped = ij.op().transform().crop(cropped, interval, true);
+                ImagePlus IPcropped = ImageJFunctions.wrapFloat(newcropped, "test");
+                IPcropped.setDimensions(1, 1, (int) newcropped.dimension(2));
+                IPcropped.setOpenAsHyperStack(true);
+                ImageProcessor ip = IPcropped.getProcessor();
+                ip.resetMinAndMax();
+
+                IPcropped.setCalibration(calibration);
+
+                FileSaver fs = new FileSaver(IPcropped);
+                fs.saveAsTiff(path+"_stageresults"+File.separator+name+"_bead_"+i+".tif");
+
+                // crops stack around the specified coordinates
+
+                // calls GetRes to extract the resolution form the PSFs
+
+
+                double[] maxShift = track(IPcropped);
+
+
+                // multiply by the correction factor
+            /*double xRes = qcMetrics[0] * corr_factor_x;
+            double yRes = qcMetrics[1] * corr_factor_y;
+            double zRes = qcMetrics[2] * corr_factor_z;*/
+                finalResults[i][0] = i;
+                finalResults[i][1] = maxShift[0];
+                finalResults[i][2] = maxShift[1];
+
+
+            }
+
+            String[] titles = getImageTitles();
+            for (String title : titles) {
+                Window window = getWindow(title);
+                window.dispose();
+                removeWindow(window);
+            }
+            toReturn[j] = finalResults;
+            WriteThisFile(fw,name,finalResults);
+        }
+        return toReturn;
+
+    }
+
+
+
 
     /**
      * Writes a matrix to an output file.
@@ -812,6 +1148,40 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         }
 
     }
+
+
+
+    private static void WriteThisFile(FileWriter fileWriter, String filename, double[][] BeadResArray){
+
+
+        try {
+            int i;
+
+                //Write the CSV file header
+                //Add a new line separator after the header
+                for (double[] doubles : BeadResArray) {
+                    fileWriter.append(filename);
+                    fileWriter.append(COMMA_DELIMITER);
+                    fileWriter.append(String.valueOf(doubles[0]));
+                    fileWriter.append(COMMA_DELIMITER);
+                    fileWriter.append(String.valueOf(doubles[1]));
+                    fileWriter.append(COMMA_DELIMITER);
+                    fileWriter.append(String.valueOf(doubles[2]));
+
+                    fileWriter.append(NEW_LINE_SEPARATOR);
+
+                }
+
+        } catch (Exception e) {
+
+            System.out.println("Error in CsvFileWriter !!!");
+            e.printStackTrace();
+
+        }
+
+    }
+
+
     /**
      * Flushes and closes the input FileWriter object. Catches exception in case it goes wrong.
      * @param fileWriter FileWriter object to be closed

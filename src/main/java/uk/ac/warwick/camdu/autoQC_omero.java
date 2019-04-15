@@ -265,6 +265,12 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
             }
             if (stage.isSelected()){
                 System.out.println("stage");
+                autoStageRepro runStage = new autoStageRepro();
+                imgs = retrieveImagesStage(imgdatas, runStage);
+                /* here is where the new UI stuff goes*/
+                runStage.setOutputDir(outputDir);
+                runStage.run_omero(imgs, imgdatas.get(0).getName(), filenames);
+                saveResults(imgdatas,outputDir, "stage");
             }
         }
 
@@ -492,6 +498,19 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
+    private List<Img> downloadImageStage(final long imageID, autoStageRepro runStage)
+            throws DSOutOfServiceException, ExecutionException, DSAccessException {
+        BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
+        ImageData image = browse.getImage(ctx, imageID);
+        RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
+        TransferFacility tf = gateway.getFacility(TransferFacility.class);
+        tf.downloadImage(ctx,outputDir.toString(), imageID);
+        String imgName = image.getName();
+
+        return runStage.readFile(outputDir+"/"+imgName);
+    }
+
+
     private static String credentials(final omero.client client) {
         return "server=" + getHost(client) + //
                 "&port=" + client.getProperty("omero.port") + //
@@ -511,7 +530,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
-    private List<Img> retrieveImagesPSF(List<ImageData> imgs, autoPSF runpsf) throws URISyntaxException, CannotCreateSessionException, PermissionDeniedException, ServerError, IOException, ExecutionException, DSAccessException, DSOutOfServiceException {
+    private List<Img> retrieveImagesPSF(List<ImageData> imgs, autoPSF runpsf) throws ExecutionException, DSAccessException, DSOutOfServiceException {
         List<Img> result = new ArrayList<>();
 
         for (ImageData img:imgs){
@@ -522,7 +541,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
-    private List<Img> retrieveImagesColoc(List<ImageData> imgs, autoColoc runcoloc) throws CannotCreateSessionException, PermissionDeniedException, ServerError, IOException, ExecutionException, DSAccessException, DSOutOfServiceException {
+    private List<Img> retrieveImagesColoc(List<ImageData> imgs, autoColoc runcoloc) throws ExecutionException, DSAccessException, DSOutOfServiceException {
         List<Img> result = new ArrayList<>();
 
         for (ImageData img:imgs){
@@ -532,11 +551,22 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         return result;
     }
 
-    private List<Img> retrieveImagesFOV(List<ImageData> imgs, autoFOV runFOV) throws CannotCreateSessionException, PermissionDeniedException, ServerError, IOException, ExecutionException, DSAccessException, DSOutOfServiceException {
+    private List<Img> retrieveImagesFOV(List<ImageData> imgs, autoFOV runFOV) throws ExecutionException, DSAccessException, DSOutOfServiceException {
         List<Img> result = new ArrayList<>();
 
         for (ImageData img:imgs){
             result.add(downloadImageFOV(img.getId(), runFOV).get(0));
+        }
+
+        return result;
+    }
+
+
+    private List<Img> retrieveImagesStage(List<ImageData> imgs, autoStageRepro runStage) throws ExecutionException, DSAccessException, DSOutOfServiceException {
+        List<Img> result = new ArrayList<>();
+
+        for (ImageData img:imgs){
+            result.add(downloadImageStage(img.getId(), runStage).get(0));
         }
 
         return result;
