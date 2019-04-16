@@ -73,6 +73,8 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     private SecurityContext ctx;
     private SimpleConnection client = new SimpleConnection();
     ExperimenterData user;
+    private List<File> files;
+    private List<File> tempfiles;
 
     /**
      * All parameters are the user-defined inputs from Fiji
@@ -159,6 +161,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         JRadioButton coloc = new JRadioButton("autoColoc");
         JRadioButton fov = new JRadioButton("autoFOV");
         JRadioButton stage = new JRadioButton("autoStageRepro");
+        JCheckBox keep = new JCheckBox("Keep temporary files ");
 
 
         JPanel myPanel = new JPanel();
@@ -217,6 +220,12 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         c.ipady = 0;
         myPanel.add(stage,c);
 
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 5;
+        c.ipady = 0;
+        myPanel.add(keep,c);
+
         //myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.X_AXIS));
 
 
@@ -273,6 +282,13 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
                 saveResults(imgdatas,outputDir, "stage");
             }
         }
+
+        if (!keep.isSelected()){
+
+            for(File f: files){
+                f.delete();
+            }
+                 }
 
 
 
@@ -465,7 +481,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         ImageData image = browse.getImage(ctx, imageID);
         RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
         TransferFacility tf = gateway.getFacility(TransferFacility.class);
-        tf.downloadImage(ctx,outputDir.toString(), imageID);
+        tempfiles = tf.downloadImage(ctx,outputDir.toString(), imageID);
         String imgName = image.getName();
 
         return runpsf.readFile(outputDir+"/"+imgName);
@@ -478,7 +494,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         ImageData image = browse.getImage(ctx, imageID);
         RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
         TransferFacility tf = gateway.getFacility(TransferFacility.class);
-        tf.downloadImage(ctx,outputDir.toString(), imageID);
+        tempfiles = tf.downloadImage(ctx,outputDir.toString(), imageID);
         String imgName = image.getName();
 
         return runcoloc.readFile(outputDir+"/"+imgName);
@@ -491,7 +507,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         ImageData image = browse.getImage(ctx, imageID);
         RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
         TransferFacility tf = gateway.getFacility(TransferFacility.class);
-        tf.downloadImage(ctx,outputDir.toString(), imageID);
+        tempfiles = tf.downloadImage(ctx,outputDir.toString(), imageID);
         String imgName = image.getName();
 
         return runFOV.readFile(outputDir+"/"+imgName);
@@ -504,7 +520,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         ImageData image = browse.getImage(ctx, imageID);
         RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
         TransferFacility tf = gateway.getFacility(TransferFacility.class);
-        tf.downloadImage(ctx,outputDir.toString(), imageID);
+        tempfiles = tf.downloadImage(ctx,outputDir.toString(), imageID);
         String imgName = image.getName();
 
         return runStage.readFile(outputDir+"/"+imgName);
@@ -532,9 +548,10 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
     private List<Img> retrieveImagesPSF(List<ImageData> imgs, autoPSF runpsf) throws ExecutionException, DSAccessException, DSOutOfServiceException {
         List<Img> result = new ArrayList<>();
-
+        files = new ArrayList<>();
         for (ImageData img:imgs){
             result.add(downloadImagePSF(img.getId(), runpsf).get(0));
+            files.addAll(tempfiles);
         }
 
     return result;
@@ -543,9 +560,10 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
     private List<Img> retrieveImagesColoc(List<ImageData> imgs, autoColoc runcoloc) throws ExecutionException, DSAccessException, DSOutOfServiceException {
         List<Img> result = new ArrayList<>();
-
+        files = new ArrayList<>();
         for (ImageData img:imgs){
             result.add(downloadImageColoc(img.getId(), runcoloc).get(0));
+            files.addAll(tempfiles);
         }
 
         return result;
@@ -553,9 +571,10 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
     private List<Img> retrieveImagesFOV(List<ImageData> imgs, autoFOV runFOV) throws ExecutionException, DSAccessException, DSOutOfServiceException {
         List<Img> result = new ArrayList<>();
-
+        files = new ArrayList<>();
         for (ImageData img:imgs){
             result.add(downloadImageFOV(img.getId(), runFOV).get(0));
+            files.addAll(tempfiles);
         }
 
         return result;
@@ -564,9 +583,10 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
     private List<Img> retrieveImagesStage(List<ImageData> imgs, autoStageRepro runStage) throws ExecutionException, DSAccessException, DSOutOfServiceException {
         List<Img> result = new ArrayList<>();
-
+        files = new ArrayList<>();
         for (ImageData img:imgs){
             result.add(downloadImageStage(img.getId(), runStage).get(0));
+            files.addAll(tempfiles);
         }
 
         return result;

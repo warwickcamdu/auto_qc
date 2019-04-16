@@ -1,215 +1,215 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
 		http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.scijava</groupId>
-		<artifactId>pom-scijava</artifactId>
-		<version>24.2.0</version>
-		<relativePath />
-	</parent>
+    <parent>
+        <groupId>org.scijava</groupId>
+        <artifactId>pom-scijava</artifactId>
+        <version>24.2.0</version>
+        <relativePath />
+    </parent>
 
-	<groupId>uk.ac.warwick.camdu</groupId>
-	<artifactId>autoqc</artifactId>
-	<version>0.13.0</version>
+    <groupId>uk.ac.warwick.camdu</groupId>
+    <artifactId>autoqc</artifactId>
+    <version>0.13.0</version>
 
-	<name>Auto QC</name>
-	<description>ImageJ plugin for automating quality control tasks for microscopes.</description>
-	<url>http://www.warwick.ac.uk/camdu/</url>
-	<inceptionYear>2019</inceptionYear>
-	<organization>
-		<name>University of Warwick</name>
-		<url>www.warwick.ac.uk</url>
-	</organization>
-	<licenses>
-		<license>
-			<name>GNU General Public License</name>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
+    <name>Auto QC</name>
+    <description>ImageJ plugin for automating quality control tasks for microscopes.</description>
+    <url>http://www.warwick.ac.uk/camdu/</url>
+    <inceptionYear>2019</inceptionYear>
+    <organization>
+        <name>University of Warwick</name>
+        <url>www.warwick.ac.uk</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>GNU General Public License</name>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
-	<developers>
-		<!-- See https://imagej.net/Team -->
-		<developer>
-			<id>erickratamero</id>
-			<name>Erick Ratamero</name>
-			<url>www.warwick.ac.uk/erickratamero</url>
-			<roles>
-				<role>founder</role>
-				<role>lead</role>
-				<role>developer</role>
-				<role>debugger</role>
-				<role>reviewer</role>
-				<role>support</role>
-				<role>maintainer</role>
-			</roles>
-		</developer>
+    <developers>
+        <!-- See https://imagej.net/Team -->
+        <developer>
+            <id>erickratamero</id>
+            <name>Erick Ratamero</name>
+            <url>www.warwick.ac.uk/erickratamero</url>
+            <roles>
+                <role>founder</role>
+                <role>lead</role>
+                <role>developer</role>
+                <role>debugger</role>
+                <role>reviewer</role>
+                <role>support</role>
+                <role>maintainer</role>
+            </roles>
+        </developer>
 
-		<developer>
-			<id>christopherschmied</id>
-			<name>Christopher Schmied</name>
+        <developer>
+            <id>christopherschmied</id>
+            <name>Christopher Schmied</name>
 
-			<roles>
-				<role>founder</role>
+            <roles>
+                <role>founder</role>
 
-			</roles>
-		</developer>
+            </roles>
+        </developer>
 
-		<developer>
-			<id>janeckhardt</id>
-			<name>Jan Eckhardt</name>
+        <developer>
+            <id>janeckhardt</id>
+            <name>Jan Eckhardt</name>
 
-			<roles>
-				<role>founder</role>
+            <roles>
+                <role>founder</role>
 
-			</roles>
-		</developer>
+            </roles>
+        </developer>
 
-		<developer>
-			<id>paulstroe</id>
-			<name>Paul Stroe</name>
+        <developer>
+            <id>paulstroe</id>
+            <name>Paul Stroe</name>
 
-			<roles>
-				<role>founder</role>
+            <roles>
+                <role>founder</role>
 
-			</roles>
-		</developer>
+            </roles>
+        </developer>
 
-		<developer>
-			<id>cesarvalades</id>
-			<name>César Augusto VALADÉS CRUZ</name>
+        <developer>
+            <id>cesarvalades</id>
+            <name>César Augusto VALADÉS CRUZ</name>
 
-			<roles>
-				<role>founder</role>
+            <roles>
+                <role>founder</role>
 
-			</roles>
-		</developer>
+            </roles>
+        </developer>
 
-		<developer>
-			<id>clairemitchell</id>
-			<name>Claire Mitchell</name>
-			<url>www.warwick.ac.uk/camdu</url>
-			<roles>
-				<role>founder</role>
-				<role>debugger</role>
-				<role>reviewer</role>
-				<role>support</role>
-				<role>maintainer</role>
-			</roles>
-		</developer>
+        <developer>
+            <id>clairemitchell</id>
+            <name>Claire Mitchell</name>
+            <url>www.warwick.ac.uk/camdu</url>
+            <roles>
+                <role>founder</role>
+                <role>debugger</role>
+                <role>reviewer</role>
+                <role>support</role>
+                <role>maintainer</role>
+            </roles>
+        </developer>
 
-	</developers>
-	<contributors>
-		<contributor>
-			<name>none</name>
-			<url>http://imagej.net/</url>
-			<roles><role>founder</role></roles>
-			<properties><id>none</id></properties>
-		</contributor>
-	</contributors>
+    </developers>
+    <contributors>
+        <contributor>
+            <name>none</name>
+            <url>http://imagej.net/</url>
+            <roles><role>founder</role></roles>
+            <properties><id>none</id></properties>
+        </contributor>
+    </contributors>
 
-	<mailingLists>
-		<mailingList>
-			<name>Image.sc Forum</name>
-			<archive>https://forum.image.sc/</archive>
-		</mailingList>
-	</mailingLists>
+    <mailingLists>
+        <mailingList>
+            <name>Image.sc Forum</name>
+            <archive>https://forum.image.sc/</archive>
+        </mailingList>
+    </mailingLists>
 
-	<scm>
-		<connection>scm:git:git://github.com/erickmartins/auto_qc</connection>
-		<developerConnection>scm:git:git@github.com:erickmartins/auto_qc</developerConnection>
-		<tag>HEAD</tag>
-		<url>https://github.com/erickmartins/auto_qc</url>
-	</scm>
-	<issueManagement>
-		<system>GitHub Issues</system>
-		<url>https://github.com/erickrmartins/auto_qc/issues</url>
-	</issueManagement>
-	<ciManagement>
-		<system>None</system>
-	</ciManagement>
+    <scm>
+        <connection>scm:git:git://github.com/erickmartins/auto_qc</connection>
+        <developerConnection>scm:git:git@github.com:erickmartins/auto_qc</developerConnection>
+        <tag>HEAD</tag>
+        <url>https://github.com/erickmartins/auto_qc</url>
+    </scm>
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/erickrmartins/auto_qc/issues</url>
+    </issueManagement>
+    <ciManagement>
+        <system>None</system>
+    </ciManagement>
 
-	<properties>
-		<package-name>uk.ac.warwick.camdu.autoqc</package-name>
-		<main-class>uk.ac.warwick.camdu.autoQC</main-class>
-		<license.licenseName>gpl</license.licenseName>
-		<license.copyrightOwners>University of Warwick</license.copyrightOwners>
-		<imagej.app.directory>/home/erick/Fiji.app/</imagej.app.directory>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-	</properties>
+    <properties>
+        <package-name>uk.ac.warwick.camdu.autoqc</package-name>
+        <main-class>uk.ac.warwick.camdu.autoQC</main-class>
+        <license.licenseName>gpl</license.licenseName>
+        <license.copyrightOwners>University of Warwick</license.copyrightOwners>
+        <imagej.app.directory>/home/erick/Fiji.app/</imagej.app.directory>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
 
-	<repositories>
-		<repository>
-			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
-		</repository>
-	</repositories>
-	<dependencies>
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej</artifactId>
-		</dependency>
+    <repositories>
+        <repository>
+            <id>imagej.public</id>
+            <url>http://maven.imagej.net/content/groups/public</url>
+        </repository>
+    </repositories>
+    <dependencies>
+        <dependency>
+            <groupId>net.imagej</groupId>
+            <artifactId>imagej</artifactId>
+        </dependency>
 
-		<dependency>
-			<groupId>ome</groupId>
-			<artifactId>formats-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>ij</artifactId>
-			<version>1.52k</version>
-		</dependency>
-		<dependency>
-			<groupId>ome</groupId>
-			<artifactId>bio-formats_plugins</artifactId>
-			<version>6.0.1</version>
-			<exclusions>
-				<exclusion>
-				<groupId>ch.systems.cisd</groupId>
-				<artifactId>jhdf5</artifactId>
-			</exclusion>
-			</exclusions>
-		</dependency>
+        <dependency>
+            <groupId>ome</groupId>
+            <artifactId>formats-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.imagej</groupId>
+            <artifactId>ij</artifactId>
+            <version>1.52k</version>
+        </dependency>
+        <dependency>
+            <groupId>ome</groupId>
+            <artifactId>bio-formats_plugins</artifactId>
+            <version>6.0.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>ch.systems.cisd</groupId>
+                    <artifactId>jhdf5</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>net.imglib2</groupId>
             <artifactId>imglib2-ij</artifactId>
             <version>2.0.0-beta-45</version>
         </dependency>
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej-ops</artifactId>
-			<version>0.43.2</version>
-		</dependency>
+        <dependency>
+            <groupId>net.imagej</groupId>
+            <artifactId>imagej-ops</artifactId>
+            <version>0.43.2</version>
+        </dependency>
 
-		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>TrackMate_</artifactId>
-			<version>4.0.0</version>
-		</dependency>
+        <dependency>
+            <groupId>sc.fiji</groupId>
+            <artifactId>TrackMate_</artifactId>
+            <version>4.0.0</version>
+        </dependency>
 
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej-omero</artifactId>
-			<version>0.8.0</version>
-		</dependency>
+        <dependency>
+            <groupId>net.imagej</groupId>
+            <artifactId>imagej-omero</artifactId>
+            <version>0.8.0</version>
+        </dependency>
 
-		<dependency>
-			<groupId>omero</groupId>
-			<artifactId>blitz</artifactId>
-			<exclusions>
-			<exclusion>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-simple</artifactId>
-			</exclusion>
-		</exclusions>
-		</dependency>
+        <dependency>
+            <groupId>omero</groupId>
+            <artifactId>blitz</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
 
 
-	</dependencies>
+    </dependencies>
 
 </project>
