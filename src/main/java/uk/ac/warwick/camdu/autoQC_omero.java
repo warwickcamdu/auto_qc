@@ -2,8 +2,6 @@
 
 package uk.ac.warwick.camdu;
 
-import Glacier2.CannotCreateSessionException;
-import Glacier2.PermissionDeniedException;
 import io.scif.services.DatasetIOService;
 import loci.formats.in.DefaultMetadataOptions;
 import loci.formats.in.MetadataLevel;
@@ -44,7 +42,6 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,10 +52,9 @@ import java.util.concurrent.ExecutionException;
  *
  * autoQC_omero - Running autoQC routines on files from OMERO
  *<p>
- * This class implements a Fiji routine that reads image files, detects beads, crops them, creates a PSFProfiler
- * object (using MetroloJ code) and retrieves the X/Y/Z FWHM resolutions for each individual bead. Finally, it
- * saves the results on a spreadsheet, identifying from which files and bead IDs they come, and saves a maximum
- * projection indicating the chosen beads and individual tiff files for each selected bead.
+ * This class implements all the other routines from this plugin, but from images stored in an OMERO server.
+ * It retrieves the images, does the necessary processing and then saves eventual output images (bead crops, etc)
+ * back to a new OMERO dataset, together with the output CSV files (that are attached to the dataset).
  *</p>
  * @param <T> I don't think we actually use this
  * @author Erick Martins Ratamero
@@ -68,6 +64,10 @@ import java.util.concurrent.ExecutionException;
 @Plugin(type = Command.class, menuPath = "Plugins>autoQC>autoQC_omero")
 public class autoQC_omero<T extends RealType<T>> extends Component implements Command {
 
+
+    /**
+    Using OMERO requires a few extra things - we declare those here
+     */
 
     private Gateway gateway;
     private SecurityContext ctx;
@@ -251,8 +251,8 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
                 imgs = retrieveImagesPSF(imgdatas, runpsf);
                 /* here is where the new UI stuff goes*/
                 runpsf.setOutputDir(outputDir);
-                runpsf.run_omero(imgs, imgdatas.get(0).getName(), filenames);
-                saveResults(imgdatas,outputDir, "PSF");
+                runpsf.run_omero(imgs, filenames);
+                saveResults(outputDir, "PSF");
             }
             if (coloc.isSelected()){
                 System.out.println("coloc");
@@ -260,8 +260,8 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
                 imgs = retrieveImagesColoc(imgdatas, runcoloc);
                 /* here is where the new UI stuff goes*/
                 runcoloc.setOutputDir(outputDir);
-                runcoloc.run_omero(imgs, imgdatas.get(0).getName(), filenames);
-                saveResults(imgdatas,outputDir, "coloc");
+                runcoloc.run_omero(imgs, filenames);
+                saveResults(outputDir, "coloc");
             }
             if (fov.isSelected()){
                 System.out.println("fov");
@@ -269,8 +269,8 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
                 imgs = retrieveImagesFOV(imgdatas, runFOV);
                 /* here is where the new UI stuff goes*/
                 runFOV.setOutputDir(outputDir);
-                runFOV.run_omero(imgs, imgdatas.get(0).getName(), filenames);
-                saveResults(imgdatas,outputDir, "FOV");
+                runFOV.run_omero(imgs, filenames);
+                saveResults(outputDir, "FOV");
             }
             if (stage.isSelected()){
                 System.out.println("stage");
@@ -278,8 +278,8 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
                 imgs = retrieveImagesStage(imgdatas, runStage);
                 /* here is where the new UI stuff goes*/
                 runStage.setOutputDir(outputDir);
-                runStage.run_omero(imgs, imgdatas.get(0).getName(), filenames);
-                saveResults(imgdatas,outputDir, "stage");
+                runStage.run_omero(imgs,  filenames);
+                saveResults(outputDir, "stage");
             }
         }
 
@@ -314,7 +314,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
 
 
-    private long createDataset(List<ImageData> imgs, String routine) throws DSAccessException, DSOutOfServiceException, ExecutionException {
+    private long createDataset(String routine) throws DSAccessException, DSOutOfServiceException, ExecutionException {
         DataManagerFacility dm = gateway.getFacility(DataManagerFacility.class);
         BrowseFacility bw = gateway.getFacility(BrowseFacility.class);
 
@@ -346,8 +346,8 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
 
 
-    private void saveResults(List<ImageData> imgs, File dir, String routine) throws ExecutionException, DSAccessException, DSOutOfServiceException, ServerError {
-        long dsid = createDataset(imgs, routine);
+    private void saveResults(File dir, String routine) throws ExecutionException, DSAccessException, DSOutOfServiceException, ServerError {
+        long dsid = createDataset(routine);
         List<String> paths = new ArrayList<>();
         List<String> csvpaths = new ArrayList<>();
         File theDir = new File(dir.getAbsolutePath()+"_"+ routine + "results");
@@ -452,10 +452,12 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 //the File annotation object. That's the way to do it.
             FileAnnotation fa = new FileAnnotationI();
             fa.setFile(originalFile);
-            //fa.setDescription(omero.rtypes.rstring(description)); // The description set above e.g. PointsModel
-            //fa.setNs(omero.rtypes.rstring(NAME_SPACE_TO_SET)); // The name space you have set to identify the file annotation.
+            /*
+            fa.setDescription(omero.rtypes.rstring(description)); // The description set above e.g. PointsModel
+            fa.setNs(omero.rtypes.rstring(NAME_SPACE_TO_SET)); // The name space you have set to identify the file annotation.
+            save the file annotation.
+            */
 
-//save the file annotation.
             fa = (FileAnnotation) dm.saveAndReturnObject(ctx, fa);
 
 //now link the image and the annotation
@@ -463,7 +465,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
             link.setChild(fa);
             link.setParent(new DatasetI(dsid, false));
 //save the link back to the server.
-            link = (DatasetAnnotationLink) dm.saveAndReturnObject(ctx, link);
+            dm.saveAndReturnObject(ctx, link);
 // o attach to a Dataset use DatasetAnnotationLink;
         }
 
@@ -479,7 +481,6 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
             throws DSOutOfServiceException, ExecutionException, DSAccessException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         ImageData image = browse.getImage(ctx, imageID);
-        RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
         TransferFacility tf = gateway.getFacility(TransferFacility.class);
         tempfiles = tf.downloadImage(ctx,outputDir.toString(), imageID);
         String imgName = image.getName();
@@ -492,7 +493,6 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
             throws DSOutOfServiceException, ExecutionException, DSAccessException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         ImageData image = browse.getImage(ctx, imageID);
-        RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
         TransferFacility tf = gateway.getFacility(TransferFacility.class);
         tempfiles = tf.downloadImage(ctx,outputDir.toString(), imageID);
         String imgName = image.getName();
@@ -505,7 +505,6 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
             throws DSOutOfServiceException, ExecutionException, DSAccessException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         ImageData image = browse.getImage(ctx, imageID);
-        RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
         TransferFacility tf = gateway.getFacility(TransferFacility.class);
         tempfiles = tf.downloadImage(ctx,outputDir.toString(), imageID);
         String imgName = image.getName();
@@ -518,7 +517,6 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
             throws DSOutOfServiceException, ExecutionException, DSAccessException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         ImageData image = browse.getImage(ctx, imageID);
-        RawDataFacility rdf = gateway.getFacility(RawDataFacility.class);
         TransferFacility tf = gateway.getFacility(TransferFacility.class);
         tempfiles = tf.downloadImage(ctx,outputDir.toString(), imageID);
         String imgName = image.getName();
@@ -527,23 +525,10 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
-    private static String credentials(final omero.client client) {
-        return "server=" + getHost(client) + //
-                "&port=" + client.getProperty("omero.port") + //
-                "&sessionID=" + client.getSessionId();
-    }
 
 
-    private static String getHost(final omero.client client) {
-        String host = client.getProperty("omero.host");
-        if (host == null || host.isEmpty()) {
-            final String router = client.getProperty("Ice.Default.Router");
-            final int index = router.indexOf("-h ");
-            if (index == -1) throw new IllegalArgumentException("hostname required");
-            host = router.substring(index + 3, router.length());
-        }
-        return host;
-    }
+
+
 
 
     private List<Img> retrieveImagesPSF(List<ImageData> imgs, autoPSF runpsf) throws ExecutionException, DSAccessException, DSOutOfServiceException {
@@ -594,7 +579,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     
     private List<ImageData> getSelectedImages(int[] selections, List<ImageData> images){
 
-        List<ImageData> result = new ArrayList<ImageData>();
+        List<ImageData> result = new ArrayList<>();
         for (int i:selections){
             result.add(images.get(i));
         }
@@ -614,19 +599,17 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         } catch (Exception e) {
             e.printStackTrace();
         }
-        List<ImageData> images = null;
+        List<ImageData> images;
 
         images = connectLoadImages();
 
         try {
             createUI(images);
-        } catch (IOException e) {
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-    gateway.disconnect();
+        gateway.disconnect();
     }
 
 
@@ -640,22 +623,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
      *
      */
     public static void main(final String... args) {
-        // create the ImageJ application context with all available services
-        //final ImageJ ij = new ImageJ();
-        //ij.ui().showUI();
 
-        // ask the user for a file to open
-        //final File file = ij.ui().chooseFile(null, "open");
-
-        //if (file != null) {
-            // load the dataset
-           // final Dataset dataset = ij.scifio().datasetIO().open(file.getPath());
-
-            // show the image
-           // ij.ui().show(dataset);
-
-            // invoke the plugin
-           // ij.command().run(autoColoc.class, true);
         autoQC_omero main_class = new autoQC_omero();
         main_class.run();
         }

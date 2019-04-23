@@ -48,10 +48,6 @@ import static java.lang.Math.*;
 
 
 /**
- */
-
-
-/**
  *
  * autoStageRepro - Fiji routine to generate stage reproducibility analysis (max. shifts in X/Y) from an image
  *<p>
@@ -116,7 +112,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
     /**
      * setBeads: only used when running this as a Java program rather than in Fiji.
-     * @param beadnum
+     * @param beadnum number of beads
      */
     private void setBeads(int beadnum){
         beads = beadnum;
@@ -124,7 +120,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
     }
     /**
      * setBeadSize: only used when running this as a Java program rather than in Fiji.
-     * @param bsize
+     * @param bsize bead size in um
      */
     private void setBeadSize(double bsize){
         beadSize = bsize;
@@ -132,7 +128,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
     }
     /**
      * setMinSep: only used when running this as a Java program rather than in Fiji.
-     * @param minsep
+     * @param minsep minimum bead separation in pixels
      */
     private void setMinSep(int minsep){
         minSeparation = minsep;
@@ -140,7 +136,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
     }
     /**
      * setNoiseTol: only used when running this as a Java program rather than in Fiji.
-     * @param ntol
+     * @param ntol noise tolerance value
      */
     private void setNoiseTol(double ntol){
         noiseTol = ntol;
@@ -149,7 +145,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
     /**
      * setDir: only used when running this as a Java program rather than in Fiji.
-     * @param sourceDir
+     * @param sourceDir directory where original images are contained
      */
     private void setDir(File[] sourceDir){
         srcDir = sourceDir;
@@ -219,7 +215,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
 
 
-        System.out.println(srcDir);
+        System.out.println(Arrays.toString(srcDir));
 
 
 
@@ -313,7 +309,6 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setAcceptAllFileFilterUsed(true);
         //chooser.showOpenDialog(this);
-        String sourceDir = "";
         File[] selectedDir = new File[1];
 
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -405,7 +400,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
     }
 
 
-    public String run_omero(List<Img> list_images, String filename, List<String> filenames) {
+    public String run_omero(List<Img> list_images, List<String> filenames) {
 
 
         createUI_omero();
@@ -426,7 +421,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
 
 
-        double[][][] finalResult = processing_omero(list_images, srcDir[0].toString(), filenames,fw);
+        processing_omero(list_images, srcDir[0].toString(), filenames,fw);
         System.out.println("Writing output: ");
 
 
@@ -586,7 +581,8 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
         // Re-run TrackMate for the tracking part
         final TrackMate trackmate = new TrackMate( model, settings );
-        boolean trackingOk = trackmate.execDetection();
+        boolean trackingOk;
+        trackingOk = trackmate.execDetection();
         trackmate.getModel().getSpots().setVisible(true);
 
         trackingOk = trackmate.execTracking();
@@ -1155,7 +1151,7 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
 
 
         try {
-            int i;
+
 
                 //Write the CSV file header
                 //Add a new line separator after the header

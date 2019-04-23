@@ -26,7 +26,6 @@ import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
-import omero.ServerError;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -39,6 +38,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -131,7 +131,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     /**
      * setBeads: only used when running this as a Java program rather than in Fiji.
-     * @param beadnum
+     * @param beadnum number of beads
      */
     private void setBeads(int beadnum){
         beads = beadnum;
@@ -140,7 +140,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     /**
      * setBeadSize: only used when running this as a Java program rather than in Fiji.
-     * @param bsize
+     * @param bsize bead size in um
      */
     private void setBeadSize(double bsize){
         beadSize = bsize;
@@ -149,7 +149,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     /**
      * setCorrX: only used when running this as a Java program rather than in Fiji.
-     * @param corr_x
+     * @param corr_x correction factor in X
      */
     private void setCorrX(double corr_x){
         corr_factor_x = corr_x;
@@ -158,7 +158,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     /**
      * setCorrY: only used when running this as a Java program rather than in Fiji.
-     * @param corr_y
+     * @param corr_y correction factor in Y
      */
     private void setCorrY(double corr_y){
         corr_factor_y = corr_y;
@@ -167,7 +167,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     /**
      * setCorrZ: only used when running this as a Java program rather than in Fiji.
-     * @param corr_z
+     * @param corr_z correction factor in Z
      */
     private void setCorrZ(double corr_z){
         corr_factor_z = corr_z;
@@ -176,7 +176,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     /**
      * setMinSep: only used when running this as a Java program rather than in Fiji.
-     * @param minsep
+     * @param minsep minimum bead separation in pixels
      */
     private void setMinSep(int minsep){
         minSeparation = minsep;
@@ -185,7 +185,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     /**
      * setNoiseTol: only used when running this as a Java program rather than in Fiji.
-     * @param ntol
+     * @param ntol noise tolerance value
      */
     private void setNoiseTol(double ntol){
         noiseTol = ntol;
@@ -194,7 +194,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
     /**
      * setDir: only used when running this as a Java program rather than in Fiji.
-     * @param sourceDir
+     * @param sourceDir directory where source images are
      */
     private void setDir(File[] sourceDir){
         srcDir = sourceDir;
@@ -235,7 +235,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
 
-        System.out.println(srcDir);
+        System.out.println(Arrays.toString(srcDir));
 
 
 
@@ -300,7 +300,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
 
-        System.out.println(srcDir);
+        System.out.println(Arrays.toString(srcDir));
 
 
 
@@ -366,7 +366,6 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setAcceptAllFileFilterUsed(true);
         //chooser.showOpenDialog(this);
-        String sourceDir = "";
         File[] selectedDir = new File[1];
 
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -456,7 +455,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 }
                 System.out.println("Processing file: " + fileEntry.getName());
 
-                double[][][] finalResult = processing(currentFiles, path, fw,fileEntry.getName() );
+                processing(currentFiles, path, fw,fileEntry.getName() );
                 System.out.println("Writing output: ");
 
 
@@ -486,7 +485,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
 
-    public String run_omero(List<Img> list_images, String filename, List<String> filenames){
+    public String run_omero(List<Img> list_images, List<String> filenames){
 
 
         createUI_omero();
@@ -507,7 +506,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
 
 
-        double[][][] finalResult = processing_omero(list_images, srcDir[0].toString(), filenames,fw);
+        processing_omero(list_images, srcDir[0].toString(), filenames,fw);
         System.out.println("Writing output: ");
 
 
@@ -545,12 +544,8 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         //  String dir = od.getDirectory();
         //  String name = od.getFileName();
         //  String id = dir + name;
-        long[] dimensions = new long[]{
-                512, 512
-        };
 
-        Img<FloatType> imgFinal = ArrayImgs.floats(dimensions);
-        List<Img> toReturn = new ArrayList<Img>();
+        List<Img> toReturn = new ArrayList<>();
 
         ImagePlus[] imps;
 
@@ -987,7 +982,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
                 float intx = pol.xpoints[i];
                 float inty = pol.ypoints[i];
-                System.out.println(String.valueOf(i)+" "+String.valueOf(intx)+" "+String.valueOf(inty));
+                System.out.println(i +" "+ intx +" "+ inty);
                 final RandomAccess<FloatType> r = proj.randomAccess();
                 r.setPosition((int) intx,0);
                 r.setPosition((int) inty,1);
@@ -1167,44 +1162,13 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      * @param filename string with the filename of the image currently being processed
      * @param BeadResArray double[][] matrix with the results for the current image
      */
-    private static void WriteFile(FileWriter fileWriter, String filename, double[][][] BeadResArray){
 
-
-            try {
-                int i;
-                for (i=0;i<BeadResArray.length;i++){
-                    //Add a new line separator after the header
-                    fileWriter.append(NEW_LINE_SEPARATOR);
-                    for (double[] doubles : BeadResArray[i]) {
-                        fileWriter.append(filename);
-                        fileWriter.append(COMMA_DELIMITER);
-                        fileWriter.append(String.valueOf(doubles[0]));
-                        fileWriter.append(COMMA_DELIMITER);
-                        fileWriter.append(String.valueOf(doubles[1]));
-                        fileWriter.append(COMMA_DELIMITER);
-                        fileWriter.append(String.valueOf(doubles[2]));
-                        fileWriter.append(COMMA_DELIMITER);
-                        fileWriter.append(String.valueOf(doubles[3]));
-                        fileWriter.append(NEW_LINE_SEPARATOR);
-                }
-
-
-                }
-            } catch (Exception e) {
-
-                System.out.println("Error in CsvFileWriter !!!");
-                e.printStackTrace();
-
-            }
-
-    }
 
 
     private static void WriteThisFile(FileWriter fileWriter, String filename, double[][] BeadResArray){
 
 
         try {
-            int i;
 
                 //Add a new line separator after the header
                 fileWriter.append(NEW_LINE_SEPARATOR);

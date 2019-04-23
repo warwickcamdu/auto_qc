@@ -28,14 +28,12 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 import static ij.WindowManager.*;
 
-
-/**
- */
 
 /**
  *
@@ -77,7 +75,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
     /**
      * setDir: only used when running this as a Java program rather than in Fiji.
-     * @param sourceDir
+     * @param sourceDir directory containing original images
      */
     private void setDir(File[] sourceDir){
         srcDir = sourceDir;
@@ -145,7 +143,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
 
-        System.out.println(srcDir);
+        System.out.println(Arrays.toString(srcDir));
 
 
 
@@ -189,7 +187,6 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         chooser.setAcceptAllFileFilterUsed(true);
         //chooser.showOpenDialog(this);
-        String sourceDir = "";
         File[] selectedDir = new File[1];
 
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -253,7 +250,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
                     System.out.println("Processing file: " + fileEntry.getName());
 
-                    double[] finalResult = processing(currentFiles, fw,fileEntry.getName() );
+                    processing(currentFiles, fw,fileEntry.getName() );
 
                     System.out.println("Writing output: ");
 
@@ -289,7 +286,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
 
-    public String run_omero(List<Img> list_images, String filename, List<String> filenames){
+    public String run_omero(List<Img> list_images, List<String> filenames){
 
 
 
@@ -309,7 +306,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
 
-        double[] finalResult = processing_omero(list_images, fw, filenames);
+        processing_omero(list_images, fw, filenames);
         System.out.println("Writing output: ");
 
 
@@ -339,12 +336,10 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         //  String dir = od.getDirectory();
         //  String name = od.getFileName();
         //  String id = dir + name;
-        long[] dimensions = new long[]{
-                512, 512
-        };
 
-        Img<FloatType> imgFinal = ArrayImgs.floats(dimensions);
-        List<Img> toReturn = new ArrayList<Img>();
+
+
+        List<Img> toReturn = new ArrayList<>();
 
         ImagePlus[] imps;
 
@@ -536,49 +531,13 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     }
 
 
-
-    /**
-     * Writes a matrix to an output file.
-     *<p>
-     * Given a FileWriter, we append the filename of the image that was processed and the results for each bead
-     * processed in that image.
-     *</p>
-     * @param fileWriter FileWriter object for the output file
-     * @param filename string with the filename of the image currently being processed
-     * @param minIntensity double with the result for the current image
-     */
-    private static void WriteFile(FileWriter fileWriter, String filename, double[] minIntensity){
-
-
-
-        try {
-            //Write the CSV file header
-            int i;
-            for (i=0;i<minIntensity.length;i++){
-                fileWriter.append(filename);
-                fileWriter.append(COMMA_DELIMITER);
-                fileWriter.append(String.valueOf(minIntensity[i]));
-                fileWriter.append(NEW_LINE_SEPARATOR);
-            }
-
-
-
-        } catch (Exception e) {
-
-            System.out.println("Error in CsvFileWriter !!!");
-            e.printStackTrace();
-
-        }
-
-    }
-
     private static void WriteThisFile(FileWriter fileWriter, String filename, double minIntensity){
 
 
 
         try {
             //Write the CSV file header
-            int i;
+
 
                 fileWriter.append(filename);
                 fileWriter.append(COMMA_DELIMITER);
