@@ -117,7 +117,17 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     @Parameter(label = "Output folder:", style = "directory")
     private File outputDir;
 
+    /**
+     * Simple wrapper for loadImagesInDataset
+     *<p>
+     * This function uses the class-wide variable dataset and the class-wide persistent OMERO client (client)
+     * and wraps loadImagesInDataset with a try-catch. It then returns the list of ImageDatas in case it is
+     * successful.
+     *</p>
 
+     * @return images List of ImageDatas - contains the ImageData objects from the dataset
+     *
+     */
     private List<ImageData> connectLoadImages(){
 
 
@@ -136,6 +146,17 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
+
+    /**
+     * Simple wrapper for creating an OMERO client
+     *<p>
+     * This function uses OMERO functions to setup the class-wide OMERO client and security context.
+     * It creates login credentials, connects the gateway and sets up the security context on the user's relevant
+     * group, plus connects the OMERO client.
+     *</p>
+
+     */
+
     private void setup_gateway() throws Exception {
         LoginCredentials cred = new LoginCredentials(username, passwd, host, port);
         Logger simpleLogger = new SimpleLogger();
@@ -144,6 +165,18 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         ctx = new SecurityContext(user.getGroupId());
         client.connect(host,port,username,passwd);
     }
+
+
+
+    /**
+     * Creates UI for selecting files and analysis routine
+     *<p>
+     * This function creates a UI window with a list of files contained in the dataset, radio buttons for selecting
+     * an analysis routine and a checkbox for choosing whether to keep temp files or not.
+     *</p>
+
+     @param images List of ImageDatas with all images contained in the desired dataset
+     */
 
     private void createUI(List<ImageData> images) throws Exception {
 
@@ -296,6 +329,17 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
+
+
+    /**
+     * Simple wrapper for creating a directory
+     *<p>
+     * If the desired directory doesn't exist, create it. That's it.
+     *</p>
+
+     @param dir File object with the desired path for the directory to be created
+     */
+
     private void createDirectory(File dir){
 
         if (!dir.exists()) {
@@ -303,6 +347,16 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
         }
     }
+
+    /**
+     * Simple wrapper for getting a list of files from a list of ImageDatas
+     *<p>
+     * Simple for loop over the input list of ImageDatas that creates a list of Strings with the filenames.
+     *</p>
+
+     @param imgs List of ImageDatas with the relevant images
+     @return result List of Strings with the image names
+     */
 
     private List<String> getFilenames(List<ImageData> imgs){
         List<String> result = new ArrayList<>();
@@ -313,6 +367,18 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
+
+
+    /**
+     * Creates a new OMERO dataset based on the original
+     *<p>
+     * Uses the class-wide dataset variable and OMERO client/context to retrieve the name of the original dataset
+     * and create a new one to store the results of the current analysis routine.
+     *</p>
+
+     @param routine String with the name of the current analysis routine
+     @return value Dataset ID for the created dataset
+     */
 
     private long createDataset(String routine) throws DSAccessException, DSOutOfServiceException, ExecutionException {
         DataManagerFacility dm = gateway.getFacility(DataManagerFacility.class);
@@ -343,7 +409,16 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         return link.getChild().getId().getValue();
     }
 
+    /**
+     * Saves the analysis results back to OMERO
+     *<p>
+     * This function goes through the local directory where outputs were saved, uploads/imports all output TIFs to
+     * the OMERO dataset created for outputs and then attaches the CSV files with analysis results to it.
+     *</p>
 
+     @param dir File pointing to the local directory containing outputs
+     @param routine String with the name of the current analysis routine
+     */
 
 
     private void saveResults(File dir, String routine) throws ExecutionException, DSAccessException, DSOutOfServiceException, ServerError {
@@ -475,7 +550,17 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
 
 
+    /**
+     * Downloads selected image to a temp directory
+     *<p>
+     * This function uses the existing OMERO gateway to download the image given by its ID. It then uses the
+     * readFile function from the analysis class to import the downloaded image as a List of Img objects.
+     *</p>
 
+     @param imageID OMERO ID of the desired image
+     @param runpsf autoPSF instance that will be used to read files
+     @return file List of Img objects with all images contained in the download file
+     */
 
     private List<Img> downloadImagePSF(final long imageID, autoPSF runpsf)
             throws DSOutOfServiceException, ExecutionException, DSAccessException {
@@ -489,6 +574,20 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
+
+
+    /**
+     * Downloads selected image to a temp directory
+     *<p>
+     * This function uses the existing OMERO gateway to download the image given by its ID. It then uses the
+     * readFile function from the analysis class to import the downloaded image as a List of Img objects.
+     *</p>
+
+     @param imageID OMERO ID of the desired image
+     @param runcoloc autoColoc instance that will be used to read files
+     @return file List of Img objects with all images contained in the download file
+     */
+
     private List<Img> downloadImageColoc(final long imageID, autoColoc runcoloc)
             throws DSOutOfServiceException, ExecutionException, DSAccessException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
@@ -501,6 +600,19 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
+
+    /**
+     * Downloads selected image to a temp directory
+     *<p>
+     * This function uses the existing OMERO gateway to download the image given by its ID. It then uses the
+     * readFile function from the analysis class to import the downloaded image as a List of Img objects.
+     *</p>
+
+     @param imageID OMERO ID of the desired image
+     @param runFOV autoFOV instance that will be used to read files
+     @return file List of Img objects with all images contained in the download file
+     */
+
     private List<Img> downloadImageFOV(final long imageID, autoFOV runFOV)
             throws DSOutOfServiceException, ExecutionException, DSAccessException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
@@ -512,6 +624,20 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         return runFOV.readFile(outputDir+"/"+imgName);
     }
 
+
+
+
+    /**
+     * Downloads selected image to a temp directory
+     *<p>
+     * This function uses the existing OMERO gateway to download the image given by its ID. It then uses the
+     * readFile function from the analysis class to import the downloaded image as a List of Img objects.
+     *</p>
+
+     @param imageID OMERO ID of the desired image
+     @param runStage autoStageRepro instance that will be used to read files
+     @return file List of Img objects with all images contained in the download file
+     */
 
     private List<Img> downloadImageStage(final long imageID, autoStageRepro runStage)
             throws DSOutOfServiceException, ExecutionException, DSAccessException {
@@ -529,6 +655,17 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
 
 
+    /**
+     * Retrieves all selected images from the input list
+     *<p>
+     * This function wraps the internal downloadImage function to do so for all selected input files, given as a list
+     * of ImageDatas. It returns a list of Img objects containing all images on all selected files.
+     *</p>
+
+     @param imgs List of ImageDatas containing the selected files given by the user
+     @param runpsf autoPSF instance that will be used to read files
+     @return file List of Img objects with all images contained in the downloaded files
+     */
 
 
     private List<Img> retrieveImagesPSF(List<ImageData> imgs, autoPSF runpsf) throws ExecutionException, DSAccessException, DSOutOfServiceException {
@@ -543,6 +680,19 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
+
+    /**
+     * Retrieves all selected images from the input list
+     *<p>
+     * This function wraps the internal downloadImage function to do so for all selected input files, given as a list
+     * of ImageDatas. It returns a list of Img objects containing all images on all selected files.
+     *</p>
+
+     @param imgs List of ImageDatas containing the selected files given by the user
+     @param runcoloc autoColoc instance that will be used to read files
+     @return file List of Img objects with all images contained in the downloaded files
+     */
+
     private List<Img> retrieveImagesColoc(List<ImageData> imgs, autoColoc runcoloc) throws ExecutionException, DSAccessException, DSOutOfServiceException {
         List<Img> result = new ArrayList<>();
         files = new ArrayList<>();
@@ -553,6 +703,20 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
         return result;
     }
+
+
+
+    /**
+     * Retrieves all selected images from the input list
+     *<p>
+     * This function wraps the internal downloadImage function to do so for all selected input files, given as a list
+     * of ImageDatas. It returns a list of Img objects containing all images on all selected files.
+     *</p>
+
+     @param imgs List of ImageDatas containing the selected files given by the user
+     @param runFOV autoFOV instance that will be used to read files
+     @return file List of Img objects with all images contained in the downloaded files
+     */
 
     private List<Img> retrieveImagesFOV(List<ImageData> imgs, autoFOV runFOV) throws ExecutionException, DSAccessException, DSOutOfServiceException {
         List<Img> result = new ArrayList<>();
@@ -566,6 +730,19 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
     }
 
 
+
+    /**
+     * Retrieves all selected images from the input list
+     *<p>
+     * This function wraps the internal downloadImage function to do so for all selected input files, given as a list
+     * of ImageDatas. It returns a list of Img objects containing all images on all selected files.
+     *</p>
+
+     @param imgs List of ImageDatas containing the selected files given by the user
+     @param runStage autoStageRepro instance that will be used to read files
+     @return file List of Img objects with all images contained in the downloaded files
+     */
+
     private List<Img> retrieveImagesStage(List<ImageData> imgs, autoStageRepro runStage) throws ExecutionException, DSAccessException, DSOutOfServiceException {
         List<Img> result = new ArrayList<>();
         files = new ArrayList<>();
@@ -576,6 +753,19 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
         return result;
     }
+
+
+    /**
+     * Retrieves the ImageData objects for the user-selected files
+     *<p>
+     * Given the list of indices for which items were picked by the user and the list of all dataset ImageData objects,
+     * creates a new list of ImageData objects containing only the ones picked by the user.
+     *</p>
+
+     @param selections array of integers with the indices for the user-selected files
+     @param images List of ImageData objects will all images in the dataset
+     @return result List of ImageData objects with the user-selected images
+     */
     
     private List<ImageData> getSelectedImages(int[] selections, List<ImageData> images){
 
@@ -585,7 +775,16 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         }
         return result;
     }
-    
+
+
+
+    /**
+     * main routine function - loads dataset images, creates UI
+     * <p>
+     *     Fairly straightforward method: setups the OMERO gateway, retrieves all images from the desired dataset
+     *     and creates UI elements based on that. Finally, it disconnects the gateway.
+     * </p>
+     */
 
     @Override
     public void run() {
