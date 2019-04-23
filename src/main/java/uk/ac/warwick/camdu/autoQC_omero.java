@@ -24,7 +24,6 @@ import omero.gateway.exception.DSAccessException;
 import omero.gateway.exception.DSOutOfServiceException;
 import omero.gateway.facility.BrowseFacility;
 import omero.gateway.facility.DataManagerFacility;
-import omero.gateway.facility.RawDataFacility;
 import omero.gateway.facility.TransferFacility;
 import omero.gateway.model.DatasetData;
 import omero.gateway.model.ExperimenterData;
@@ -88,32 +87,37 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
 
     /**
-     * beads : integer, number of beads to be processed per file
+     * host : address of the OMERO server to be accessed
      */
     @Parameter(label = "hostname:")
     private String host =  "";
     /**
-     * corr_factor_x/y/z : doubles, correction factor from FWHM resolution values (in case different definition of
-     *                     resolution, or wrong metadata, etc etc)
+     * port: port number (probably doesn't need to be changed)
      */
     @Parameter(label = "port:")
     private int port = 4064;
     /**
-     * corr_factor_x/y/z : doubles, correction factor from FWHM resolution values (in case different definition of
-     *                      resolution, or wrong metadata, etc etc)
+     * username : well, username for accessing the OMERO server
      */
     @Parameter(label = "username:")
     private String username = "";
     /**
-     * corr_factor_x/y/z : doubles, correction factor from FWHM resolution values (in case different definition of
-     *                     resolution, or wrong metadata, etc etc)
+     * passwd: OMERO server password
      */
     @Parameter(label = "password:", style = "password")
     private String passwd = "";
 
+
+    /**
+     * dataset: OMERO ID for the dataset
+     */
     @Parameter(label = "Dataset ID:")
     private long dataset;
 
+
+    /**
+     * outputDir: location for the directory where temp data will be saved
+     */
     @Parameter(label = "Output folder:", style = "directory")
     private File outputDir;
 

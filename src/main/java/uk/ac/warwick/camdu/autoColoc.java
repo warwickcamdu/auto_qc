@@ -22,7 +22,6 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -146,6 +145,11 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
     }
 
+
+    /**
+     * setOutputDir: only used when running this from autoQC_OMERO
+     * @param outputDir directory where original images are contained
+     */
     public void setOutputDir(File outputDir){
         srcDir = new File[1];
         srcDir[0] = outputDir;
@@ -251,6 +255,18 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
 
     }
+
+
+    /**
+     * createUI_omero: generates an UI if running this as part of autoQC_omero
+     *
+     *<p>
+     *  Generates JTextFields and a JButton for inputting parameters. It's just a simple JPanel with all the
+     *  JTextFields. Finally, it uses the set functions to set the class parameters from the text fields.
+     *</p>
+     *
+     *
+     */
 
 
     private void createUI_omero(){
@@ -395,6 +411,16 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
     }
 
+
+    /**
+     * Simple wrapper for creating a directory
+     *<p>
+     * If the desired directory doesn't exist, create it. That's it.
+     *</p>
+
+     @param dir File object with the desired path for the directory to be created
+     */
+
     private void createDirectory(File dir){
 
         if (!dir.exists()) {
@@ -402,6 +428,18 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
 
         }
     }
+
+
+    /**
+     * main routine function - goes over the list of files, process them and writes the output values
+     * <p>
+     *     Fairly straightforward method: loops over the list of files that is given as input, calls "processing" to
+     *     get outputs and write files.
+     * </p>
+     * @param list_images List of Img objects with the images to be processed
+     * @param filenames List of Strings with the filenames of the images to be processed
+     * @return filename time-stamped filename for the CSV output file
+     */
 
     public String run_omero(List<Img> list_images, List<String> filenames){
 
@@ -789,6 +827,26 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
     }
 
 
+
+
+    /**
+     * Does the meat of the processing routine - takes an Img, returns a double[][] matrix with all the results
+     *<p>
+     * This function gets an Img and a string with the path to th original file. From that, it tries to create a
+     * directory for the outputs (beads, indication of where the chosen beads were). Then, it takes the first slice
+     * on that image and finds maxima on it.
+     * Next, it goes through each maximum, checks it's valid (given minimum separation between maxima) and, for the
+     * valid ones up to the number of desired beads, crops them, feeds them into the track() method (that wraps
+     * TrackMate) and retrieves the maximum displacement values.
+     * Finally, it returns a matrix with bead IDs, X/Y displacements for that input file.
+     *</p>
+     * @param images List of Img objects with the input Z-stacks
+     * @param path String with the path to the original image file that is being processed
+     * @param filenames List of Strings with all filenames for the files being processed
+     * @param fw FileWriter object for the output CSV file
+     * @return finalResults double[][][] matrix with all the displacement results for all the beads in all images
+     *
+     */
 
     private double[][][] processing_omero(List<Img> images, String path, List<String> filenames, FileWriter fw){
         //private void processing(Img<FloatType> image){

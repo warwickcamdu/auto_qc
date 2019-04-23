@@ -12,10 +12,8 @@ import loci.plugins.in.ImportProcess;
 import loci.plugins.in.ImporterOptions;
 import net.imagej.ImageJ;
 import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.real.FloatType;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -82,6 +80,11 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
     }
 
+
+    /**
+     * setOutputDir: only used when running this from autoQC_OMERO
+     * @param outputDir directory where original images are contained
+     */
     public void setOutputDir(File outputDir){
         srcDir = new File[1];
         srcDir[0] = outputDir;
@@ -274,7 +277,14 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         CloseFile(fw);
     }
 
+    /**
+     * Simple wrapper for creating a directory
+     *<p>
+     * If the desired directory doesn't exist, create it. That's it.
+     *</p>
 
+     @param dir File object with the desired path for the directory to be created
+     */
     private void createDirectory(File dir){
 
         if (!dir.exists()) {
@@ -285,6 +295,16 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
 
+    /**
+     * main routine function - goes over the list of files, process them and writes the output values
+     * <p>
+     *     Fairly straightforward method: loops over the list of files that is given as input, calls "processing" to
+     *     get outputs and write files.
+     * </p>
+     * @param list_images List of Img objects with the images to be processed
+     * @param filenames List of Strings with the filenames of the images to be processed
+     * @return filename time-stamped filename for the CSV output file
+     */
 
     public String run_omero(List<Img> list_images, List<String> filenames){
 
@@ -452,7 +472,23 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
     }
 
-
+    /**
+     * Does the meat of the processing routine - takes an Img, returns a double[][] matrix with all the results
+     *<p>
+     * This function gets an Img and a string with the path to th original file. From that, it tries to create a
+     * directory for the outputs (beads, indication of where the chosen beads were). Then, it takes the first slice
+     * on that image and finds maxima on it.
+     * Next, it goes through each maximum, checks it's valid (given minimum separation between maxima) and, for the
+     * valid ones up to the number of desired beads, crops them, feeds them into the track() method (that wraps
+     * TrackMate) and retrieves the maximum displacement values.
+     * Finally, it returns a matrix with bead IDs, X/Y displacements for that input file.
+     *</p>
+     * @param images List of Img objects with the input Z-stacks
+     * @param filenames List of Strings with all filenames for the files being processed
+     * @param fw FileWriter object for the output CSV file
+     * @return finalResults double[] matrix with all the displacement results for all the beads in all images
+     *
+     */
 
     private double[] processing_omero(List<Img> images, FileWriter fw, List<String> filenames){
         //private void processing(Img<FloatType> image){
@@ -530,6 +566,17 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         return minVal;
     }
 
+
+    /**
+     * Writes a value to an output file.
+     *<p>
+     * Given a FileWriter, we append the filename of the image that was processed and the results for each bead
+     * processed in that image.
+     *</p>
+     * @param fileWriter FileWriter object for the output file
+     * @param filename string with the filename of the image currently being processed
+     * @param minIntensity double value with the results for the current image
+     */
 
     private static void WriteThisFile(FileWriter fileWriter, String filename, double minIntensity){
 
