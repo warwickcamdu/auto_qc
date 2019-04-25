@@ -91,6 +91,13 @@ public class SimpleConnection {
         Collection<ProjectData> projects = browse.getProjects(ctx);
     }
 
+
+    /**
+     * Creates a List of ImageData objects with all images in the input dataset.
+     *
+     * @param datasetId OMERO ID for the dataset.
+     * @return imgs List of ImageData objects
+     */
     @SuppressWarnings("unchecked")
     public List<ImageData> loadImagesInDataset(long datasetId) throws Exception {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
@@ -100,6 +107,15 @@ public class SimpleConnection {
         return imgs;
     }
 
+
+
+    /**
+     * Retrieves the project ID for the project containing the input dataset.
+     *
+     * @param dsd DatasetData object for the relevant dataset
+     * @param ctx SecurityContext for the relevant user
+     * @return projId OMERO ID for the containing project
+     */
     public long get_project(DatasetData dsd, Gateway gateway, SecurityContext ctx) throws DSAccessException, DSOutOfServiceException, ExecutionException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         Collection<ProjectData> projects = browse.getProjects(ctx);
