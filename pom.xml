@@ -145,7 +145,7 @@
     <repositories>
         <repository>
             <id>imagej.public</id>
-            <url>http://maven.imagej.net/content/groups/public</url>
+            <url>http://maven.scijava.org/content/groups/public</url>
         </repository>
     </repositories>
     <dependencies>
