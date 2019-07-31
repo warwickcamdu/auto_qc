@@ -729,7 +729,9 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             minz = 0;
             maxx = 300;
             maxy = 300;
-            maxz = image.dimension(2);
+            maxz = image.dimension(image.numDimensions()-1);
+
+
             if (image.dimension(0)>300){
                 minx = image.dimension(0)/2-150;
             }
@@ -737,20 +739,31 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 miny = image.dimension(1)/2-150;
             }
             FinalInterval interval;
+            int i;
+
+
             if (image.numDimensions() > 3){
-                interval = FinalInterval.createMinSize(minx,miny,minz,channelChoice,maxx,maxy,maxz,channelChoice);
+                interval = FinalInterval.createMinSize(minx,miny,channelChoice-1,minz,maxx,maxy,1,maxz);
+                //System.out.printf("%d, %d, %d, %d, %d, %d, %d, %d",minx,miny,channelChoice,minz,maxx,maxy,channelChoice,maxz);
+
             }else{
                 interval = FinalInterval.createMinSize(minx,miny,minz,maxx,maxy,maxz);
+                //System.out.printf("%d, %d, %d, %d, %d, %d",minx,miny,minz,maxx,maxy,maxz);
             }
-
 
 
 
             RandomAccessibleInterval cropped;
             cropped  = ij.op().transform().crop(image,interval, true);
-
+            System.out.println(cropped.numDimensions());
 //        ImageJFunctions.show(cropped);
-            int[] projected_dimensions = new int[cropped.numDimensions() - 1];
+            int[] projected_dimensions;
+//            if (image.numDimensions() > 3){
+//                projected_dimensions = new int[cropped.numDimensions() - 2];
+//            }else{
+            projected_dimensions = new int[cropped.numDimensions() - 1];
+//            }
+
 
             int dim = 2;
             int d;
@@ -780,7 +793,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             float[][] resultsTable = new float[pol.npoints][3];
 
             // loops over ROIs and get pixel Vvlue at their coordinate.
-            for (int i=0; i < pol.npoints; i++){
+            for (i=0; i < pol.npoints; i++){
 
                 float intx = pol.xpoints[i];
                 float inty = pol.ypoints[i];
@@ -877,7 +890,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
             //ij.ui().showUI();
             // loops over selected pixels and crops out the PSFs
-            for (int i = 0; i < goodX.length; i++){
+            for (i = 0; i < goodX.length; i++){
 
 
                 minx = 0;
@@ -913,6 +926,8 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 ip.resetMinAndMax();
 
                 IPcropped.setCalibration(calibration);
+                System.out.println(calibration.pixelDepth);
+                System.out.println(calibration.toString());
 
 
                 FileSaver fs = new FileSaver(IPcropped);
@@ -1018,7 +1033,11 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             minz = 0;
             maxx = 300;
             maxy = 300;
-            maxz = image.dimension(2);
+            maxz = image.dimension(image.numDimensions()-1);
+            if (channelChoice > image.numDimensions()){
+                channelChoice = image.numDimensions();
+            }
+
             if (image.dimension(0)>300){
                 minx = image.dimension(0)/2-150;
             }
@@ -1026,10 +1045,16 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                 miny = image.dimension(1)/2-150;
             }
             FinalInterval interval;
+            int i;
+
+
             if (image.numDimensions() > 3){
-                interval = FinalInterval.createMinSize(minx,miny,minz,channelChoice,maxx,maxy,maxz,channelChoice);
+                interval = FinalInterval.createMinSize(minx,miny,channelChoice-1,minz,maxx,maxy,1,maxz);
+                //System.out.printf("%d, %d, %d, %d, %d, %d, %d, %d",minx,miny,channelChoice,minz,maxx,maxy,channelChoice,maxz);
+
             }else{
                 interval = FinalInterval.createMinSize(minx,miny,minz,maxx,maxy,maxz);
+                //System.out.printf("%d, %d, %d, %d, %d, %d",minx,miny,minz,maxx,maxy,maxz);
             }
 
 
@@ -1071,7 +1096,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             float[][] resultsTable = new float[pol.npoints][3];
 
             // loops over ROIs and get pixel Vvlue at their coordinate.
-            for (int i=0; i < pol.npoints; i++){
+            for (i=0; i < pol.npoints; i++){
 
                 float intx = pol.xpoints[i];
                 float inty = pol.ypoints[i];
@@ -1169,7 +1194,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
             //ij.ui().showUI();
             // loops over selected pixels and crops out the PSFs
-            for (int i = 0; i < goodX.length; i++){
+            for (i = 0; i < goodX.length; i++){
 
 
                 minx = 0;
