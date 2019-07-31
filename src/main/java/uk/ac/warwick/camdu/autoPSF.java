@@ -104,6 +104,11 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
     @Parameter(label = "Bead size (um):")
     private double beadSize = 1.0;
     /**
+     * channelChoice : int, chooses from which channel (for multichannel images) will be used
+     */
+    @Parameter(label = "Channel")
+    private int channelChoice = 1;
+    /**
      * noiseTol : double, value to be used by the Find Maxima routine. Higher means fewer maxima are detected.
      */
     @Parameter(label = "Noise threshold:")
@@ -143,6 +148,15 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
      */
     private void setBeadSize(double bsize){
         beadSize = bsize;
+
+    }
+
+    /**
+     * setChannel: only used when running this as a Java program rather than in Fiji.
+     * @param channel Channel choice
+     */
+    private void setChannel(int channel){
+        channelChoice = channel;
 
     }
 
@@ -227,6 +241,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         JTextField beadField = new JTextField("5",5);
         JTextField beadSizeField = new JTextField("1",5);
+        JTextField channelField = new JTextField("1",5);
         JTextField corrXField = new JTextField("1.168",5);
         JTextField corrYField = new JTextField("1.168",5);
         JTextField corrZField = new JTextField("1.168",5);
@@ -251,6 +266,9 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         myPanel.add(new JLabel("Bead size (um):"));
         myPanel.add(beadSizeField);
+
+        myPanel.add(new JLabel("Channel"));
+        myPanel.add(channelField);
 
         myPanel.add(new JLabel("Correction factor (x):"));
         myPanel.add(corrXField);
@@ -281,6 +299,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         setCorrY(Double.parseDouble(corrYField.getText()));
         setCorrZ(Double.parseDouble(corrZField.getText()));
         setBeadSize(Double.parseDouble(beadSizeField.getText()));
+        setChannel(Integer.parseInt(channelField.getText()));
         setMinSep(Integer.parseInt(sepField.getText()));
         setNoiseTol(Double.parseDouble(noiseTolField.getText()));
 
@@ -309,6 +328,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         JTextField corrXField = new JTextField("1.168",5);
         JTextField corrYField = new JTextField("1.168",5);
         JTextField corrZField = new JTextField("1.168",5);
+        JTextField channelField = new JTextField("1",5);
         JTextField sepField = new JTextField("15",5);
         JTextField noiseTolField = new JTextField("100",5);
 
@@ -328,6 +348,9 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
         myPanel.add(new JLabel("Bead size (um):"));
         myPanel.add(beadSizeField);
+
+        myPanel.add(new JLabel("Channel"));
+        myPanel.add(channelField);
 
         myPanel.add(new JLabel("Correction factor (x):"));
         myPanel.add(corrXField);
@@ -357,6 +380,7 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         setCorrY(Double.parseDouble(corrYField.getText()));
         setCorrZ(Double.parseDouble(corrZField.getText()));
         setBeadSize(Double.parseDouble(beadSizeField.getText()));
+        setChannel(Integer.parseInt(channelField.getText()));
         setMinSep(Integer.parseInt(sepField.getText()));
         setNoiseTol(Double.parseDouble(noiseTolField.getText()));
 
@@ -611,8 +635,8 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
                     imp = imps[0];
                     //System.out.println(imp.getProperties().toString());
                     calibration = imp.getCalibration();
-                    if (imp.getNDimensions() != 3){
-                        IJ.error("Number of image dimensions is not 3");
+                    if (imp.getNDimensions() < 3){
+                        IJ.error("Number of image dimensions is less than 3");
                         return null;
                     }
 
@@ -690,13 +714,15 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
         System.out.println("Opened file, processing");
 
         //ImageJFunctions.show(image);
-        // Crops the image to get middle of the field of view
+        // Crops the image to get middle of the field of view; also takes only the selected channel
         int j;
 
 
         for (j=0;j<images.size();j++){
             Img image = images.get(j);
-
+            if (channelChoice > image.numDimensions()){
+                channelChoice = image.numDimensions();
+            }
             long minx, miny, minz, maxx, maxy, maxz;
             minx = 0;
             miny = 0;
@@ -710,8 +736,13 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             if (image.dimension(1)>300){
                 miny = image.dimension(1)/2-150;
             }
+            FinalInterval interval;
+            if (image.numDimensions() > 3){
+                interval = FinalInterval.createMinSize(minx,miny,minz,channelChoice,maxx,maxy,maxz,channelChoice);
+            }else{
+                interval = FinalInterval.createMinSize(minx,miny,minz,maxx,maxy,maxz);
+            }
 
-            FinalInterval interval = FinalInterval.createMinSize(minx,miny,minz,maxx,maxy,maxz);
 
 
 
@@ -734,7 +765,6 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
 
             Img<T> projection = (Img<T>) ij.op().transform().project(proj, cropped, maxOp, 2);
             ImageJFunctions.show(proj);
-
             ImagePlus imp = IJ.getImage();
             MaximumFinder mf = new MaximumFinder();
             Polygon pol = mf.getMaxima(imp.getProcessor(),(int)noiseTol,true);
@@ -995,8 +1025,12 @@ public class autoPSF<T extends RealType<T>> extends Component implements Command
             if (image.dimension(1)>300){
                 miny = image.dimension(1)/2-150;
             }
-
-            FinalInterval interval = FinalInterval.createMinSize(minx,miny,minz,maxx,maxy,maxz);
+            FinalInterval interval;
+            if (image.numDimensions() > 3){
+                interval = FinalInterval.createMinSize(minx,miny,minz,channelChoice,maxx,maxy,maxz,channelChoice);
+            }else{
+                interval = FinalInterval.createMinSize(minx,miny,minz,maxx,maxy,maxz);
+            }
 
 
 
