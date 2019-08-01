@@ -25,8 +25,11 @@ Erick Ratamero, Cesar Augusto Valades Cruz, Christopher Schmied, Jan Eckhardt, P
 Usage Instructions:
 
 autoPSF: expects Z-stacks with sub-resolution fluorescent beads.  Multichannel stacks are fine; you can pick which channel to use as a parameter.
+
 autoFOV: expects single 2d images of a fluorescent slide (uniform sample).  Multichannel images also fine, will operate over each individual channel and save all results.
+
 autoColoc: expects 4d images (XYCZT) of larger-than-resolution fluorescent beads.  
+
 autoStageRepro: expects 3d images (timelapse). Each timepoint should be recorded after translating the stage and moving it back to its original position.
 
 If you're using files from multiple folders, outputs will be saved on the folder where the first file is.  
