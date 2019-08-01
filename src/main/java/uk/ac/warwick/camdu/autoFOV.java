@@ -5,6 +5,7 @@ package uk.ac.warwick.camdu;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.Calibration;
+import ij.plugin.ChannelSplitter;
 import ij.process.ImageProcessor;
 import loci.formats.FormatException;
 import loci.plugins.BF;
@@ -109,7 +110,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         try {
             fileWriter = new FileWriter(FilePath);
             //Write the CSV file header
-            fileWriter.append("file_id"+COMMA_DELIMITER+"minimum_relative_intensity");
+            fileWriter.append("file_id"+COMMA_DELIMITER+"channel"+COMMA_DELIMITER+"minimum_relative_intensity");
             //Add a new line separator after the header
             fileWriter.append(NEW_LINE_SEPARATOR);
 
@@ -385,14 +386,17 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
                     int_options.setSeriesOn(i,true);
                     imps = BF.openImagePlus(int_options);
                     imp = imps[0];
+
                     //System.out.println(imp.getProperties().toString());
                     calibration = imp.getCalibration();
-                    if (imp.getNDimensions() > 2){
-                        IJ.error("Number of image dimensions is larger than 2");
+                    if (imp.getNDimensions() > 3){
+                        IJ.error("Number of image dimensions is larger than 3");
                         return null;
                     }
-
-                    toReturn.add(ImageJFunctions.convertFloat(imps[0]));
+                    //imps[0].show();
+                    //ImageJFunctions.show((Img)ImageJFunctions.wrapNumeric(imps[0]));
+                    toReturn.add(ImageJFunctions.wrapReal(imps[0]));
+                    //ImageJFunctions.show(toReturn.get(i));
                 }
             }
 
@@ -435,31 +439,53 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
     private double[] processing(List<Img> images, FileWriter fw, String name){
         //private void processing(Img<FloatType> image){
 
+        long resultssize = 0;
+        for (int i = 0; i < images.size(); i++){
+            if (images.get(i).numDimensions() > 2){
+                resultssize = resultssize + images.get(i).dimension(2);
+            }else{
+                resultssize = resultssize + 1;
+            }
 
-        double[] results = new double[images.size()];
+        }
+        double[] results = new double[(int)resultssize];
         System.out.println("Opened file, processing");
         int i;
         for (i=0;i<images.size();i++) {
 
             Img image = images.get(i);
+
             //ImageJFunctions.show(image);
             // Crops the image to get middle of the field of view
 
             ImagePlus input = ImageJFunctions.wrap(image, "test");
             ImageProcessor ip = input.getProcessor();
             input.trimProcessor();
-
+//
             input.setProcessor(null, ip.convertToShort(false));
             input.setCalibration(calibration);
             ip.resetMinAndMax();
 
 
             input.show();
-            fieldIllumination FI = new fieldIllumination(input);
-            double finalResult = parseResult(FI.getStringData());
-            results[i] = finalResult;
-            WriteThisFile(fw, name, finalResult);
-
+            if (input.getNChannels() > 1){
+                ImagePlus[] multiinput = ChannelSplitter.split(input);
+                System.out.println(multiinput.length);
+                for (int j = 0; j < multiinput.length; j++){
+                    ImagePlus newinput = multiinput[j];
+                    //newinput.show();
+                    fieldIllumination FI = new fieldIllumination(newinput);
+                    double finalResult = parseResult(FI.getStringData());
+                    results[i] = finalResult;
+                    WriteThisFile(fw, name, j+1, finalResult);
+                    i++;
+                }
+            }else {
+                fieldIllumination FI = new fieldIllumination(input);
+                double finalResult = parseResult(FI.getStringData());
+                results[i] = finalResult;
+                WriteThisFile(fw, name, 1, finalResult);
+            }
             String[] titles = getImageTitles();
             for (String title : titles) {
                 Window window = getWindow(title);
@@ -494,7 +520,16 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
         //private void processing(Img<FloatType> image){
 
 
-        double[] results = new double[images.size()];
+        long resultssize = 0;
+        for (int i = 0; i < images.size(); i++){
+            if (images.get(i).numDimensions() > 2){
+                resultssize = resultssize + images.get(i).dimension(2);
+            }else{
+                resultssize = resultssize + 1;
+            }
+
+        }
+        double[] results = new double[(int)resultssize];
         System.out.println("Opened file, processing");
         int i;
         for (i=0;i<images.size();i++) {
@@ -513,11 +548,24 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
             input.show();
-            fieldIllumination FI = new fieldIllumination(input);
-            double finalResult = parseResult(FI.getStringData());
-            results[i] = finalResult;
-            WriteThisFile(fw, name, finalResult);
-
+            if (input.getNChannels() > 1){
+                ImagePlus[] multiinput = ChannelSplitter.split(input);
+                System.out.println(multiinput.length);
+                for (int j = 0; j < multiinput.length; j++){
+                    ImagePlus newinput = multiinput[j];
+                    //newinput.show();
+                    fieldIllumination FI = new fieldIllumination(newinput);
+                    double finalResult = parseResult(FI.getStringData());
+                    results[i] = finalResult;
+                    WriteThisFile(fw, name, j+1, finalResult);
+                    i++;
+                }
+            }else {
+                fieldIllumination FI = new fieldIllumination(input);
+                double finalResult = parseResult(FI.getStringData());
+                results[i] = finalResult;
+                WriteThisFile(fw, name, 1, finalResult);
+            }
             String[] titles = getImageTitles();
             for (String title : titles) {
                 Window window = getWindow(title);
@@ -545,6 +593,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
      * @return minVal double with the minimum relative intensity from all 4 corners of the image
      */
     private double parseResult(String stats){
+        System.out.println(stats);
         double minVal = 1.0;
         String[] lines = stats.split("\n");
 
@@ -578,7 +627,7 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
      * @param minIntensity double value with the results for the current image
      */
 
-    private static void WriteThisFile(FileWriter fileWriter, String filename, double minIntensity){
+    private static void WriteThisFile(FileWriter fileWriter, String filename, int channel, double minIntensity){
 
 
 
@@ -587,6 +636,8 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
 
                 fileWriter.append(filename);
+                fileWriter.append(COMMA_DELIMITER);
+                fileWriter.append(String.valueOf(channel));
                 fileWriter.append(COMMA_DELIMITER);
                 fileWriter.append(String.valueOf(minIntensity));
                 fileWriter.append(NEW_LINE_SEPARATOR);

@@ -147,6 +147,12 @@
             <id>imagej.public</id>
             <url>http://maven.scijava.org/content/groups/public</url>
         </repository>
+        <repository>
+            <id>omero</id>
+            <url>https://artifacts.openmicroscopy.org/artifactory/ome.releases</url>
+        </repository>
+
+
     </repositories>
     <dependencies>
         <dependency>
@@ -163,6 +169,17 @@
             <artifactId>ij</artifactId>
             <version>1.52p</version>
         </dependency>
+<!--        <dependency>-->
+<!--        <groupId>org.openmicroscopy</groupId>-->
+<!--        <artifactId>omero-gateway</artifactId>-->
+<!--        <version>5.5.3</version>-->
+<!--            <exclusions>-->
+<!--                           <exclusion>-->
+<!--                               <groupId>com.sun</groupId>-->
+<!--                                <artifactId>mail</artifactId>-->
+<!--                            </exclusion>-->
+<!--                       </exclusions>-->
+<!--    </dependency>-->
         <dependency>
             <groupId>ome</groupId>
             <artifactId>bio-formats_plugins</artifactId>
@@ -191,22 +208,47 @@
             <version>4.0.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>net.imagej</groupId>
-            <artifactId>imagej-omero</artifactId>
-            <version>0.8.1</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>net.imagej</groupId>-->
+<!--            <artifactId>imagej-omero</artifactId>-->
+<!--            <version>0.8.1</version>-->
+<!--        </dependency>-->
 
         <dependency>
-            <groupId>omero</groupId>
-            <artifactId>blitz</artifactId>
-            <version>5.5.0-m1-ice36-b102</version>
+            <groupId>org.openmicroscopy</groupId>
+            <artifactId>omero-gateway</artifactId>
+            <version>5.5.3</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-simple</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.sun.mail</groupId>
+                    <artifactId>javax.mail</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.xmlgraphics</groupId>
+                    <artifactId>batik-all</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.marcus-nl.btm</groupId>
+                    <artifactId>btm</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-aop</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.activation</groupId>
+                    <artifactId>activation</artifactId>
+                </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
         </dependency>
 
 

@@ -401,16 +401,25 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
 
         DatasetI ds = new DatasetI();
         ds.setName(omero.rtypes.rstring(name));
-        ProjectDatasetLink link = new ProjectDatasetLinkI();
-        link.setChild(ds);
-        link.setParent(new ProjectI(proj, false));
-        link = (ProjectDatasetLink) dm.saveAndReturnObject(ctx, link);
+        long returnval;
+        if (proj != -1){
+            ProjectDatasetLink link = new ProjectDatasetLinkI();
+            link.setChild(ds);
+            link.setParent(new ProjectI(proj, false));
+            link = (ProjectDatasetLink) dm.saveAndReturnObject(ctx, link);
+            returnval = link.getChild().getId().getValue();
+        }else{
+            ds = (DatasetI) dm.saveAndReturnObject(ctx, ds);
+            returnval = ds.getId().getValue();
+            //returnval = ds.getId().getValue();
+        }
+
         //        Project test = link.getParent();
 //        ds = (DatasetI) dm.saveAndReturnObject(ctx, ds);
 //        link = (ProjectDatasetLink) dm.saveAndReturnObject(ctx, link);
         //System.out.println(ds.getId().getValue());
 //        System.out.println(test.getId().getValue());
-        return link.getChild().getId().getValue();
+        return returnval;
     }
 
     /**
