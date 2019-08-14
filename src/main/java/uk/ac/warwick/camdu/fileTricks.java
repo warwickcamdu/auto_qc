@@ -27,7 +27,7 @@ class fileTricks {
     private fileTricks() {
     }
 
-    public static void save(String content, String path) {
+    static void save(String content, String path) {
         try {
             BufferedWriter file = new BufferedWriter(new FileWriter(path));
             file.write(content, 0, content.length());

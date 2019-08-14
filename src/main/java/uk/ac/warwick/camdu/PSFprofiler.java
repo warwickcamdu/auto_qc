@@ -27,31 +27,28 @@ class PSFprofiler {
     private ImagePlus ip;
     private int[] center;
     private double[][] xProfile;
-    private final double[] xParams;
     private double xR2;
     private String xParamString;
     private double[][] yProfile;
-    private final double[] yParams;
     private double yR2;
     private String yParamString;
     private double[][] zProfile;
-    private final double[] zParams;
     private double zR2;
     private String zParamString;
     private Calibration cal;
     private final double[] resol;
 
-    public PSFprofiler(ImagePlus ip) {
+    PSFprofiler(ImagePlus ip) {
         this.xProfile = null;
-        this.xParams = null;
+        double[] xParams = null;
         this.xR2 = 0.0D / 0.0;
         this.xParamString = "Fitted on y = a + (b-a)*exp(-(x-c)^2/(2*d^2))";
         this.yProfile = null;
-        this.yParams = null;
+        double[] yParams = null;
         this.yR2 = 0.0D / 0.0;
         this.yParamString = "Fitted on y = a + (b-a)*exp(-(x-c)^2/(2*d^2))";
         this.zProfile = null;
-        this.zParams = null;
+        double[] zParams = null;
         this.zR2 = 0.0D / 0.0;
         this.zParamString = "Fitted on y = a + (b-a)*exp(-(x-c)^2/(2*d^2))";
         this.cal = new Calibration();
@@ -186,7 +183,7 @@ class PSFprofiler {
         return plot;
     }
 
-    public double[] getResolutions() {
+    double[] getResolutions() {
         return this.resol;
     }
 

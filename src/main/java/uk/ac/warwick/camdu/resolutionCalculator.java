@@ -11,7 +11,7 @@ class resolutionCalculator {
     public final int CONFOCAL = 1;
     private final double[] resolutions = new double[]{0.0D, 0.0D, 0.0D};
 
-    public resolutionCalculator(int microscope, double wavelength, double NA) {
+    resolutionCalculator(int microscope, double wavelength, double NA) {
         wavelength /= 1000.0D;
         switch(microscope) {
             case 0:
@@ -27,7 +27,7 @@ class resolutionCalculator {
 
     }
 
-    public double[] getResolutions() {
+    double[] getResolutions() {
         return this.resolutions;
     }
 }

@@ -10,9 +10,9 @@ class fieldIlluminationArray {
     public String name;
     public int[] coord;
     public int intensity;
-    public double relativeInt;
+    double relativeInt;
 
-    public fieldIlluminationArray() {
+    fieldIlluminationArray() {
     }
 
     public String toString() {

@@ -11,13 +11,13 @@ import java.text.DateFormat;
 import java.util.Calendar;
 
 public class microscope {
-    public static final String[] MICRO = new String[]{"WideField", "Confocal"};
-    public static final int WIDEFIELD = 0;
+    static final String[] MICRO = new String[]{"WideField", "Confocal"};
+    static final int WIDEFIELD = 0;
     public static final int CONFOCAL = 1;
     public int microscope = 0;
-    public double wavelength = 0.0D;
-    public double NA = 0.0D;
-    public double pinhole = 0.0D;
+    double wavelength = 0.0D;
+    double NA = 0.0D;
+    double pinhole = 0.0D;
     public final double[] resolution;
 
     public microscope(Calibration cal, int microscope, double wavelength, double NA, double pinhole, String sampleInfos, String comments) {

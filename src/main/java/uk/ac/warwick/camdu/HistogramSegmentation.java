@@ -17,7 +17,7 @@ class HistogramSegmentation {
     private int max = 0;
     private int[] limits;
 
-    public HistogramSegmentation(ImagePlus ip) {
+    HistogramSegmentation(ImagePlus ip) {
         int bitDepth = ip.getBitDepth();
         if (bitDepth != 8 && bitDepth != 16) {
             throw new IllegalArgumentException("Histo_seg expect a 8- or 16-bits images");
@@ -42,7 +42,7 @@ class HistogramSegmentation {
         }
     }
 
-    public int[] calcLimits(int nClasses, int maxIt, int epsilon, boolean log) {
+    int[] calcLimits(int nClasses, int maxIt, int epsilon, boolean log) {
         double[] means = new double[nClasses];
         this.limits = new int[nClasses + 1];
         this.limits[0] = this.min;
@@ -286,7 +286,7 @@ class HistogramSegmentation {
         }
     }
 
-    public ImagePlus getsegmentedImage(ImagePlus ip, int nClass) {
+    ImagePlus getsegmentedImage(ImagePlus ip, int nClass) {
         if (this.limits == null) {
             throw new IllegalArgumentException("calcLimits has not yet been called.");
         } else if (nClass >= 0 && nClass < this.limits.length) {

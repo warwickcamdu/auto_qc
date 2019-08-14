@@ -182,7 +182,7 @@ class fieldIllumination {
         return out;
     }
 
-    public String getStringData() {
+    String getStringData() {
         String out = "\tImage centre\tCentre of intensity\tCentre of the max intensity\tCentre of the 100% zone\nCoordinates\t(" + dataTricks.round((double)(this.w / 2), 3) + ", " + dataTricks.round((double)(this.h / 2), 3) + ")\t(" + dataTricks.round(this.xCent, 3) + ", " + dataTricks.round(this.yCent, 3) + ")\t(" + dataTricks.round(this.xMax, 3) + ", " + dataTricks.round(this.yMax, 3) + ")\t(" + dataTricks.round(this.xCent100, 3) + ", " + dataTricks.round(this.yCent100, 3) + ")\n" + "Distance to image centre\t\t" + dataTricks.round(this.distInt, 3) + "µm\t" + dataTricks.round(this.distMax, 3) + "µm\t" + dataTricks.round(this.dist100, 3) + "µm\n\n" + "Location\tIntensity\tIntensity relative to max\n";
 
         for(int i = 0; i < this.remarkInt.size(); ++i) {

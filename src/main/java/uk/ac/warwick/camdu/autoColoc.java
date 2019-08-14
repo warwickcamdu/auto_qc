@@ -571,11 +571,10 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
      *</p>
      * @param images Img object with the input Z-stack
      * @param path String with the path to the original image file that is being processed
-     * @return finalResults double[][] matrix with all the shifts results for all the beads in this image
      *
      */
 
-    private double[][][] processing(List<Img> images, String path, FileWriter fw, String name){
+    private void processing(List<Img> images, String path, FileWriter fw, String name){
         //private void processing(Img<FloatType> image){
 
         double[][][] toReturn = new double[images.size()][][];
@@ -822,8 +821,6 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
             WriteThisFile(fw,name,finalResults);
         }
 
-        return toReturn;
-
     }
 
 
@@ -844,11 +841,10 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
      * @param path String with the path to the original image file that is being processed
      * @param filenames List of Strings with all filenames for the files being processed
      * @param fw FileWriter object for the output CSV file
-     * @return finalResults double[][][] matrix with all the displacement results for all the beads in all images
      *
      */
 
-    private double[][][] processing_omero(List<Img> images, String path, List<String> filenames, FileWriter fw){
+    private void processing_omero(List<Img> images, String path, List<String> filenames, FileWriter fw){
         //private void processing(Img<FloatType> image){
 
         double[][][] toReturn = new double[images.size()][][];
@@ -1094,8 +1090,6 @@ public class autoColoc<T extends RealType<T>> extends Component implements Comma
             toReturn[j] = finalResults;
             WriteThisFile(fw,name,finalResults);
         }
-
-        return toReturn;
 
     }
 

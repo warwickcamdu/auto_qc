@@ -46,7 +46,7 @@ public class SimpleConnection {
      * @param userName The name of the user.
      * @param password The user's password.
      */
-    public SecurityContext connect(String hostname, int port, String userName, String password)
+    SecurityContext connect(String hostname, int port, String userName, String password)
         throws Exception
     {
         LoginCredentials cred = new LoginCredentials();
@@ -78,13 +78,13 @@ public class SimpleConnection {
     }
     
     /** Makes sure to disconnect to destroy sessions.*/
-    public void disconnect()
+    private void disconnect()
     {
         gateway.disconnect();
     }
 
     /** Loads the projects owned by the user currently logged in.*/
-    public void loadProjects()
+    private void loadProjects()
         throws Exception
     {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
@@ -99,12 +99,11 @@ public class SimpleConnection {
      * @return imgs List of ImageData objects
      */
     @SuppressWarnings("unchecked")
-    public List<ImageData> loadImagesInDataset(long datasetId) throws Exception {
+    List<ImageData> loadImagesInDataset(long datasetId) throws Exception {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         Collection<ImageData> images = browse.getImagesForDatasets(ctx, Arrays.asList(datasetId));
         Iterator<ImageData> j = images.iterator();
-        List<ImageData> imgs = IteratorUtils.toList(j);
-        return imgs;
+        return (List<ImageData>) IteratorUtils.toList(j);
     }
 
 
@@ -116,7 +115,7 @@ public class SimpleConnection {
      * @param ctx SecurityContext for the relevant user
      * @return projId OMERO ID for the containing project
      */
-    public long get_project(DatasetData dsd, Gateway gateway, SecurityContext ctx) throws DSAccessException, DSOutOfServiceException, ExecutionException {
+    long get_project(DatasetData dsd, Gateway gateway, SecurityContext ctx) throws DSAccessException, DSOutOfServiceException, ExecutionException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         Collection<ProjectData> projects = browse.getProjects(ctx);
         Iterator<ProjectData> i = projects.iterator();
@@ -127,11 +126,10 @@ public class SimpleConnection {
             project = i.next();
             boolean isThere = false;
             Set<DatasetData> ds = project.getDatasets();
-            Iterator<DatasetData> id = ds.iterator();
-            while (id.hasNext()){
-                dat = id.next();
-                if (dat.getId() == dsd.getId()){
-                    isThere= true;
+            for (DatasetData d : ds) {
+                dat = d;
+                if (dat.getId() == dsd.getId()) {
+                    isThere = true;
                     projId = project.getId();
                     System.out.println("project ID:");
                     System.out.println(projId);
@@ -145,7 +143,7 @@ public class SimpleConnection {
     }
 
     /** Loads the image with the id 1.*/
-    public void loadFirstImage()
+    private void loadFirstImage()
         throws Exception
     {
         ParametersI params = new ParametersI();

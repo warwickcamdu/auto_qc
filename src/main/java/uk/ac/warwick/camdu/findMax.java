@@ -8,10 +8,10 @@ package uk.ac.warwick.camdu;
 import ij.ImagePlus;
 
 class findMax {
-    public findMax() {
+    findMax() {
     }
 
-    public int[] getAllCoordinates(ImagePlus ip) {
+    int[] getAllCoordinates(ImagePlus ip) {
         int[] coord;
         if (ip.getNSlices() == 1) {
             coord = this.get2DCenter(ip);

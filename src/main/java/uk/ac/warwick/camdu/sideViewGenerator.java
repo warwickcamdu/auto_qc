@@ -26,10 +26,10 @@ class sideViewGenerator {
     public static final int SD_METHOD = 4;
     public static final int MEDIAN_METHOD = 5;
 
-    public sideViewGenerator() {
+    sideViewGenerator() {
     }
 
-    public ImagePlus getXYview(ImagePlus ip, int projType) {
+    ImagePlus getXYview(ImagePlus ip, int projType) {
         Calibration cal = ip.getCalibration();
         ip.setCalibration(new Calibration());
         ZProjector zp = new ZProjector(ip);
@@ -41,15 +41,15 @@ class sideViewGenerator {
         return output;
     }
 
-    public ImagePlus getXZview(ImagePlus ip, int projType, boolean keepCalibration) {
+    ImagePlus getXZview(ImagePlus ip, int projType, boolean keepCalibration) {
         return this.sideView(ip, projType, keepCalibration, 0);
     }
 
-    public ImagePlus getYZview(ImagePlus ip, int projType, boolean keepCalibration) {
+    ImagePlus getYZview(ImagePlus ip, int projType, boolean keepCalibration) {
         return this.sideView(ip, projType, keepCalibration, 1);
     }
 
-    public ImagePlus getPanelView(ImagePlus ip, int projType, boolean keepCalibration, boolean addScaleBar, int size, boolean addCross, double[] coordCross, int crossRadius) {
+    ImagePlus getPanelView(ImagePlus ip, int projType, boolean keepCalibration, boolean addScaleBar, int size, boolean addCross, double[] coordCross, int crossRadius) {
         Font font = new Font("Times New Roman", 1, 12);
         Calibration cal = ip.getCalibration();
         double xzRatio = cal.pixelDepth / cal.pixelWidth;

@@ -30,16 +30,16 @@ class coAlignement {
     private double RGDistUnCal;
     private double RBDistUnCal;
     private double GBDistUnCal;
-    public double RGDistCal;
-    public double RBDistCal;
-    public double GBDistCal;
+    double RGDistCal;
+    double RBDistCal;
+    double GBDistCal;
     private double RGRefDist;
     private double RBRefDist;
     private double GBRefDist;
     private Calibration cal = new Calibration();
     private String microSection = "";
 
-    public coAlignement(ImagePlus[] ip, microscope[] conditions) {
+    coAlignement(ImagePlus[] ip, microscope[] conditions) {
         if (ip.length < 2) {
             throw new IllegalArgumentException("coAlignement requires at least 2 ImagePlus.");
         } else if (ip.length != conditions.length) {

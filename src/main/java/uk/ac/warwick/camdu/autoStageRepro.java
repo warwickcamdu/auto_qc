@@ -919,12 +919,11 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
      * @param path String with the path to the original image file that is being processed
      * @param filenames List of Strings with all filenames for the files being processed
      * @param fw FileWriter object for the output CSV file
-     * @return finalResults double[][][] matrix with all the displacement results for all the beads in all images
      *
      */
 
 
-    private double[][][] processing_omero(List<Img> images, String path, List<String> filenames, FileWriter fw){
+    private void processing_omero(List<Img> images, String path, List<String> filenames, FileWriter fw){
         //private void processing(Img<FloatType> image){
 
         double[][][] toReturn = new double[images.size()][][];
@@ -1153,7 +1152,6 @@ public class autoStageRepro<T extends RealType<T>> extends Component implements 
             toReturn[j] = finalResults;
             WriteThisFile(fw,name,finalResults);
         }
-        return toReturn;
 
     }
 

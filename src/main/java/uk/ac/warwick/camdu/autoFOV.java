@@ -431,19 +431,17 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
 
      *</p>
      * @param images Img object with the input Z-stack
-
-     * @return finalResult double with the maximum decrease in illumination in the field of view
      *
      */
 
-    private double[] processing(List<Img> images, FileWriter fw, String name){
+    private void processing(List<Img> images, FileWriter fw, String name){
         //private void processing(Img<FloatType> image){
 
         long resultssize = 0;
-        for (int i = 0; i < images.size(); i++){
-            if (images.get(i).numDimensions() > 2){
-                resultssize = resultssize + images.get(i).dimension(2);
-            }else{
+        for (Img img : images) {
+            if (img.numDimensions() > 2) {
+                resultssize = resultssize + img.dimension(2);
+            } else {
                 resultssize = resultssize + 1;
             }
 
@@ -494,7 +492,6 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
             }
 
         }
-        return results;
 
     }
 
@@ -510,21 +507,20 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
      * Finally, it returns a matrix with bead IDs, X/Y displacements for that input file.
      *</p>
      * @param images List of Img objects with the input Z-stacks
-     * @param filenames List of Strings with all filenames for the files being processed
      * @param fw FileWriter object for the output CSV file
-     * @return finalResults double[] matrix with all the displacement results for all the beads in all images
+     * @param filenames List of Strings with all filenames for the files being processed
      *
      */
 
-    private double[] processing_omero(List<Img> images, FileWriter fw, List<String> filenames){
+    private void processing_omero(List<Img> images, FileWriter fw, List<String> filenames){
         //private void processing(Img<FloatType> image){
 
 
         long resultssize = 0;
-        for (int i = 0; i < images.size(); i++){
-            if (images.get(i).numDimensions() > 2){
-                resultssize = resultssize + images.get(i).dimension(2);
-            }else{
+        for (Img img : images) {
+            if (img.numDimensions() > 2) {
+                resultssize = resultssize + img.dimension(2);
+            } else {
                 resultssize = resultssize + 1;
             }
 
@@ -574,7 +570,6 @@ public class autoFOV<T extends RealType<T>> extends Component implements Command
             }
 
         }
-        return results;
 
     }
 

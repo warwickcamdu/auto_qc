@@ -441,15 +441,17 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         File theDir = new File(dir.getAbsolutePath()+"_"+ routine + "results");
         File[] fileNames = theDir.listFiles();
 
-        for(File file : fileNames){
-            if (file.getName().endsWith("tif")){
-                System.out.println(file.getAbsolutePath());
-                paths.add(file.getAbsolutePath());
-            }
-            if (file.getName().endsWith("csv")){
-                csvpaths.add(file.getName());
-            }
+        if (fileNames != null) {
+            for(File file : fileNames){
+                if (file.getName().endsWith("tif")){
+                    System.out.println(file.getAbsolutePath());
+                    paths.add(file.getAbsolutePath());
+                }
+                if (file.getName().endsWith("csv")){
+                    csvpaths.add(file.getName());
+                }
 
+            }
         }
         String[] allpaths = paths.toArray(new String[0]);
         ImportConfig config = new ome.formats.importer.ImportConfig();
@@ -570,12 +572,12 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
      * readFile function from the analysis class to import the downloaded image as a List of Img objects.
      *</p>
 
-     @param imageID OMERO ID of the desired image
-     @param runpsf autoPSF instance that will be used to read files
      @return file List of Img objects with all images contained in the download file
+      * @param imageID OMERO ID of the desired image
+     * @param runpsf autoPSF instance that will be used to read files
      */
 
-    private List<Img> downloadImagePSF(final long imageID, autoPSF runpsf)
+    private List downloadImagePSF(final long imageID, autoPSF runpsf)
             throws DSOutOfServiceException, ExecutionException, DSAccessException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         ImageData image = browse.getImage(ctx, imageID);
@@ -596,12 +598,12 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
      * readFile function from the analysis class to import the downloaded image as a List of Img objects.
      *</p>
 
-     @param imageID OMERO ID of the desired image
-     @param runcoloc autoColoc instance that will be used to read files
      @return file List of Img objects with all images contained in the download file
+      * @param imageID OMERO ID of the desired image
+     * @param runcoloc autoColoc instance that will be used to read files
      */
 
-    private List<Img> downloadImageColoc(final long imageID, autoColoc runcoloc)
+    private List downloadImageColoc(final long imageID, autoColoc runcoloc)
             throws DSOutOfServiceException, ExecutionException, DSAccessException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         ImageData image = browse.getImage(ctx, imageID);
@@ -621,12 +623,12 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
      * readFile function from the analysis class to import the downloaded image as a List of Img objects.
      *</p>
 
-     @param imageID OMERO ID of the desired image
-     @param runFOV autoFOV instance that will be used to read files
      @return file List of Img objects with all images contained in the download file
+      * @param imageID OMERO ID of the desired image
+     * @param runFOV autoFOV instance that will be used to read files
      */
 
-    private List<Img> downloadImageFOV(final long imageID, autoFOV runFOV)
+    private List downloadImageFOV(final long imageID, autoFOV runFOV)
             throws DSOutOfServiceException, ExecutionException, DSAccessException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         ImageData image = browse.getImage(ctx, imageID);
@@ -647,12 +649,12 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
      * readFile function from the analysis class to import the downloaded image as a List of Img objects.
      *</p>
 
-     @param imageID OMERO ID of the desired image
-     @param runStage autoStageRepro instance that will be used to read files
      @return file List of Img objects with all images contained in the download file
+      * @param imageID OMERO ID of the desired image
+     * @param runStage autoStageRepro instance that will be used to read files
      */
 
-    private List<Img> downloadImageStage(final long imageID, autoStageRepro runStage)
+    private List downloadImageStage(final long imageID, autoStageRepro runStage)
             throws DSOutOfServiceException, ExecutionException, DSAccessException {
         BrowseFacility browse = gateway.getFacility(BrowseFacility.class);
         ImageData image = browse.getImage(ctx, imageID);
@@ -685,7 +687,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         List<Img> result = new ArrayList<>();
         files = new ArrayList<>();
         for (ImageData img:imgs){
-            result.add(downloadImagePSF(img.getId(), runpsf).get(0));
+            result.add((Img)downloadImagePSF(img.getId(), runpsf).get(0));
             files.addAll(tempfiles);
         }
 
@@ -710,7 +712,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         List<Img> result = new ArrayList<>();
         files = new ArrayList<>();
         for (ImageData img:imgs){
-            result.add(downloadImageColoc(img.getId(), runcoloc).get(0));
+            result.add((Img)downloadImageColoc(img.getId(), runcoloc).get(0));
             files.addAll(tempfiles);
         }
 
@@ -735,7 +737,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         List<Img> result = new ArrayList<>();
         files = new ArrayList<>();
         for (ImageData img:imgs){
-            result.add(downloadImageFOV(img.getId(), runFOV).get(0));
+            result.add((Img)downloadImageFOV(img.getId(), runFOV).get(0));
             files.addAll(tempfiles);
         }
 
@@ -760,7 +762,7 @@ public class autoQC_omero<T extends RealType<T>> extends Component implements Co
         List<Img> result = new ArrayList<>();
         files = new ArrayList<>();
         for (ImageData img:imgs){
-            result.add(downloadImageStage(img.getId(), runStage).get(0));
+            result.add((Img)downloadImageStage(img.getId(), runStage).get(0));
             files.addAll(tempfiles);
         }
 

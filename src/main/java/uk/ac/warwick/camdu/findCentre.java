@@ -18,10 +18,10 @@ class findCentre {
     public static final int XZ = 1;
     public static final int YZ = 2;
 
-    public findCentre() {
+    findCentre() {
     }
 
-    public double[] getAllCoordinates(ImagePlus ip) {
+    double[] getAllCoordinates(ImagePlus ip) {
         double[] coord;
         if (ip.getNSlices() == 1) {
             coord = this.get2DCenter(ip, 0);
@@ -37,15 +37,13 @@ class findCentre {
         double[] coord = new double[2];
         ImagePlus proj = null;
         switch(profileType) {
-            case 0:
-                proj = (new sideViewGenerator()).getXYview(ip, 3);
-                break;
             case 1:
                 proj = (new sideViewGenerator()).getXZview(ip, 3, false);
                 break;
             case 2:
                 proj = (new sideViewGenerator()).getYZview(ip, 3, false);
                 break;
+            case 0:
             default:
                 proj = (new sideViewGenerator()).getXYview(ip, 3);
         }

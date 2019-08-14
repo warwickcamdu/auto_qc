@@ -19,7 +19,7 @@ class dataTricks {
         return (double)Math.round(nb2round * Math.pow(10.0D, (double)nbOfDigits)) / Math.pow(10.0D, (double)nbOfDigits);
     }
 
-    public static double dist(double[] coord1, double[] coord2, Calibration cal) {
+    static double dist(double[] coord1, double[] coord2, Calibration cal) {
         double calX = cal.pixelWidth;
         double calY = cal.pixelHeight;
         double calZ = cal.pixelDepth;
