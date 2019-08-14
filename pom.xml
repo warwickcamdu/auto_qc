@@ -15,6 +15,11 @@
     <groupId>uk.ac.warwick.camdu</groupId>
     <artifactId>autoqc</artifactId>
     <version>0.14.0</version>
+    <requireJavaVersion>
+
+        <version>[1.7,1.11)</version>
+
+    </requireJavaVersion>
 
     <name>Auto QC</name>
     <description>ImageJ plugin for automating quality control tasks for microscopes.</description>
