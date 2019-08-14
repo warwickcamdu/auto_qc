@@ -17,7 +17,7 @@ Auto-generated Javadoc is available:
 https://erickmartins.github.io/auto_qc/
 
 
-Initial work by group 4 of the NEUBIAS trainingschool 11:  
+Initial work by group 4 of the NEUBIAS training school 11:  
 Erick Ratamero, Cesar Augusto Valades Cruz, Christopher Schmied, Jan Eckhardt, Paul Stroe.
 
 ==========================================================================================
