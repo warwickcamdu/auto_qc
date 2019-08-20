@@ -1,4 +1,5 @@
-[![DOI](https://zenodo.org/badge/169840753.svg)](https://zenodo.org/badge/latestdoi/169840753)  [![Scaladoc](https://javadoc-badge.appspot.com/uk.ac.warwick.camdu/autoqc_0.14.0.svg?label=javadoc)](https://warwickcamdu.github.io/auto_qc/) [![Build Status](https://travis-ci.com/warwickcamdu/auto_qc.svg?branch=master)](https://travis-ci.com/warwickcamdu/auto_qc)
+[![DOI](https://zenodo.org/badge/202144851.svg)](https://zenodo.org/badge/latestdoi/202144851)
+  [![Scaladoc](https://javadoc-badge.appspot.com/uk.ac.warwick.camdu/autoqc_0.14.0.svg?label=javadoc)](https://warwickcamdu.github.io/auto_qc/) [![Build Status](https://travis-ci.com/warwickcamdu/auto_qc.svg?branch=master)](https://travis-ci.com/warwickcamdu/auto_qc)
 
 
 
