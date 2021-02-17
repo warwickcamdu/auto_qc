@@ -3,8 +3,6 @@
 
 
 
-ImageJ plugin auto_qc
-
 
 Continuing development by Erick Ratamero, experimental input from Claire Mitchell  
 https://www.warwick.ac.uk/camdu
