@@ -3,7 +3,7 @@
 
 
 
-ImageJ plugin auto_qc
+mageJ plugin auto_qc
 
 
 Continuing development by Erick Ratamero, experimental input from Claire Mitchell  
